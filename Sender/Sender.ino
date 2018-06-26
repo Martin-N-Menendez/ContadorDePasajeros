@@ -27,7 +27,7 @@ int contador = 0;
 int purge = 150;
 int RSSILimit = -90;
 int SendTime = 180;
-int TimesSeen = 10;
+int TimesSeen = 10;    
 // ################ Fecha y hora  ############
 extern String date;
 extern String hora;
@@ -38,6 +38,7 @@ extern String dia;
 extern String t;
 //WiFiUDP ntpUDP;
 extern NTPClient timeClient;
+uint32_t before = 0;
 // ################ Prototipos ############
 void inline handler (void);
 void SaveData();
@@ -96,7 +97,7 @@ void setup() {
 // ################ Loop ############
 void loop() {
   digitalWrite(LED, !LOW);
-  uint32_t now = millis() / 1000;
+  uint32_t now = millis();
 
    //Firebase.remove("Linea:Roca");
    //Firebase.remove("Linea:Mitre");
@@ -111,14 +112,27 @@ void loop() {
    */
    
    if(SendingFlag == true && line != 0)
-   {
-     ConfigTime();
+   {  
+     before = millis(); 
+     ConfigTime(); 
+     now = millis();     
+     Serial.printf("Configurar hora:%i ms\r\n",(now-before));
+     
      Serial.print(date);
      Serial.print(" ");
      Serial.println(t);
-     SetAddress();
-     SendParsedData();
-     ReadConfig();
+     before = millis(); 
+     SetAddress();   
+     now = millis();   
+     Serial.printf("Setear direccion:%i ms\r\n",(now-before));
+     before = millis(); 
+     SendParsedData();  
+     now = millis();
+     Serial.printf("Enviar a FB:%i ms\r\n",(now-before));
+     before = millis(); 
+     ReadConfig(); 
+     now = millis();
+     Serial.printf("Leer config:%i ms\r\n",(now-before));
      SendingFlag = false;     
    }
     

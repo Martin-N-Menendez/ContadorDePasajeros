@@ -3,6 +3,11 @@
 const int numChars = BUFFER_IN;
 char receivedChars[numChars];
 char tempChars[numChars];
+// ####################### Configuracion ########################
+extern int purge;
+extern int RSSILimit;
+extern int SendTime;
+extern int TimesSeen;    
 // ################## Datos parseados ###################
 int line = 0;
 int train = 0;
@@ -12,7 +17,7 @@ int people = 0;
 int rssi = 0;
 int lht = 0;
 int reported = 0;
-
+   
 int state = 0;
 int idx = 0;
 
@@ -29,7 +34,6 @@ extern String anio;
 extern String mes;
 extern String dia;
 extern String t;
-
 // ################ Funciones  ############
 
 // ################ Lector e identificador de marcadores  ############
@@ -141,6 +145,7 @@ void SetAddress(void){
 // ################ Generar datos a enviar  ############
 void SetInfo(){
     information = "";
+    if(!(idx%2)){information += '|';}
     information += MAC;  
     information += '|';
     information += String(rssi);
@@ -148,8 +153,6 @@ void SetInfo(){
     information += String(lht);
     information += '|';
     information += String(reported);
-
-    if(idx%2){information += '|';}
     //information += '\0';
 }
 
@@ -158,6 +161,9 @@ void SendParsedData(void){
 
   int maxVector;
   int k=1;
+
+  Firebase.remove(address);
+  Firebase.remove(address);
   
   if (idx%2)
   {
@@ -166,24 +172,15 @@ void SendParsedData(void){
   }
   else{ maxVector = idx/2;}
 
-  Firebase.setString(address+0+"/"+j+"/",String(date)+' '+String(t)+'|'+String(people)+'|'+String(idx));
+  Firebase.setString(address+0+"/1/",String(date)+' '+String(t)+'|'+String(people)+'|'+String(idx));
   while(Firebase.failed())
   {
     Serial.println("Fallo de cabecera!");
-    Firebase.setString(address+0+"/"+j+"/",String(date)+' '+String(t)+'|'+String(people)+'|'+String(idx));
+    Firebase.setString(address+0+"/1/",String(date)+' '+String(t)+'|'+String(people)+'|'+String(idx));
   }
     
   for(int i=1; i <= idx; i+=2)
-  { 
-     
-    /*
-    if(!((i-1)%(19-1)))
-    {
-      //Firebase.setString(address+0+"/0/","Contador de pasajeros");  
-      Firebase.setString(address+0+"/"+j+"/",String(date)+' '+String(t)+'|'+String(people)+'|'+String(idx));
-    }
-    */
-    
+  {    
      Firebase.setString(address+k+"/1/",DataInformation[i-1].Data+DataInformation[i].Data); 
      while(Firebase.failed())
      {
@@ -192,13 +189,15 @@ void SendParsedData(void){
      }
      k++;
   }
-  
+
+  /*
   for(int k=maxVector+1; k<=130;k++)
   {
     Firebase.remove(address+k);
   }
-  
+  */
   j++;
+  
 }
 
 // ################ Enviar datos por Firebase BACKUP ############
@@ -226,9 +225,13 @@ void SendParsedData_2(void){
 // ################ Leer datos de Firebase ############
 void ReadConfig(){
     digitalWrite(LED, !HIGH);
-    purge=Firebase.getInt("Purge Time");   // 150
-    RSSILimit=Firebase.getInt("RSSI");     // -90
-    SendTime=Firebase.getInt("Send Time");   // 180
-    TimesSeen=Firebase.getInt("Times Seen"); // 10
-    Serial.printf("[%d|%i|%i|%i\n",purge,RSSILimit,SendTime,TimesSeen);
+    String Config = "";
+    //purge=Firebase.getInt("Purge Time");   // 150
+    //RSSILimit=Firebase.getInt("RSSI");     // -90
+    //SendTime=Firebase.getInt("Send Time");   // 180
+    //TimesSeen=Firebase.getInt("Times Seen"); // 10
+    Config += '[';
+    Config += Firebase.getString("Configuracion");
+    //Serial.printf("[%d|%i|%i|%i\n",purge,RSSILimit,SendTime,TimesSeen);
+    Serial.println(Config);
 }
