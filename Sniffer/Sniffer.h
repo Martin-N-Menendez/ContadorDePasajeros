@@ -18,7 +18,6 @@
 #define LED 2
 #define TXPOWER -20.5
 
-
 #define CLIENT_DEBUG 0
 #define BEACON_DEBUG 0
 #define PROBE_DEBUG 0
