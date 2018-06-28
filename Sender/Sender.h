@@ -22,8 +22,8 @@
 #define LED 2
 #define DEBUG_MODE 0
 // ####################### Configuracion de redes ########################
-#define WIFI_CHOSEN 1  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo
-#define SV_CHOSEN 1 // 0: Principal , 1: Secundario
+#define WIFI_CHOSEN 5  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo, 5: Pablo Saavedra
+#define SV_CHOSEN 0 // 0: Principal , 1: Secundario
 
 // ####################### Servidor PRINCIPAL ########################
 #if(!SV_CHOSEN)
@@ -56,6 +56,11 @@
 #if(WIFI_CHOSEN==4)
 #define WIFI_SSID "WiFi-Arnet-3b37"
 #define WIFI_PASSWORD "33B3FF74EE"
+#endif
+
+#if(WIFI_CHOSEN==5)
+#define WIFI_SSID "WiFi-Arnet-425o"
+#define WIFI_PASSWORD "7kql4vx3Yv7PK"
 #endif
 
 // ################ Fecha y hora  ############

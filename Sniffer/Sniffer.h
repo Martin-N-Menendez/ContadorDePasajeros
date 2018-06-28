@@ -4,7 +4,7 @@
 #include "Stations.h"
 #include "functions.h"
 
-#define LINE LINEA1
+#define LINE LINEA3
 #define TRAIN 123
 #define CAR 5
 
@@ -22,8 +22,8 @@
 #define BEACON_DEBUG 0
 #define PROBE_DEBUG 0
 #define DEBUG_MODE 0
-#define SENDER_MODE 0
-#define RANDOM_MODE 1
+#define SENDER_MODE 1
+#define RANDOM_MODE 0
 
 #define BUFFER_SIZE 256*2
 #define BUFFER_IN 256
