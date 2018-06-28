@@ -63,7 +63,13 @@ for (int u = 0; u < probes_known_count; u++) {
   Serial.printf("<%i|",state);
   Serial.printf("%i|",u+1);
   Serial.print(formatMac1(probes_known[u].station));
-  Serial.printf("|%i|%i|%i\n",probes_known[u].rssi,lht,probes_known[u].reported);
+  //Serial.printf("|%i|%i|%i\n",probes_known[u].rssi,lht,probes_known[u].reported);
+  Serial.print('|');
+  Serial.print(probes_known[u].rssi);
+  Serial.print('|');
+  Serial.printf("%i",lht);
+  Serial.print('|');
+  Serial.println(probes_known[u].reported);
   delay(150);
 }
   Serial.printf("%c",'!');
