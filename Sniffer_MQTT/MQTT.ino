@@ -1,6 +1,6 @@
 #include "Stations.h"
 
-#define LINE LINEA1
+#define LINE LINEA3
 #define TRAIN 12
 #define CAR 5
 
@@ -41,7 +41,15 @@ void sendMQTT(){
   //client.publish(address,String(date)+' '+String(t)+'|'+String(people)+'|'+String(idx));
   //Serial.println("E");
   delay(100);
-  client.publish(address,"{\"Fecha\":\""+date+' '+t+"\",\"People\":"+people+",\"MACs\":"+probes_known_count+"}");
+  int j=0;
+  while(!client.publish(address,"{\"Fecha\":\""+date+' '+t+"\",\"People\":"+people+",\"MACs\":"+probes_known_count+"}"))
+  {
+    j++;
+    Serial.println("Falla al enviar cabecera");
+    connect();
+    client.publish(address,"{\"Fecha\":\""+date+' '+t+"\",\"People\":"+people+",\"MACs\":"+probes_known_count+"}");
+    if(j>=5) break;
+  }
   //Serial.println("F");
   client.subscribe(address);
   delay(100);

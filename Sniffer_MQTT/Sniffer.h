@@ -3,7 +3,7 @@
 #include <string.h>
 #include "functions.h"
 
-#define WIFI_CHOSEN 1  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo
+#define WIFI_CHOSEN 3  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo
 
 // ####################### Redes a elegir ########################
 #if(WIFI_CHOSEN==1)
