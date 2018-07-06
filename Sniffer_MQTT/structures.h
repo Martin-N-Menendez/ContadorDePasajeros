@@ -33,14 +33,14 @@ struct beaconinfo{
 };
 
 struct probeinfo{
-  uint8_t bssid[ETH_MAC_LEN];
+  //uint8_t bssid[ETH_MAC_LEN];
   uint8_t station[ETH_MAC_LEN];
   uint8_t ap[ETH_MAC_LEN];
   uint8_t ssid[28];
   int ssid_len;
   char channel;
-  int err;
-  int rssi;
+  int8_t err;
+  int8_t rssi;
   //uint16_t seq_n;
 /* rpw additions */
   uint8_t header;
@@ -244,7 +244,7 @@ struct probeinfo parse_probe(uint8_t *frame, uint16_t framelen, signed rssi){
   }
   memcpy(pi.ap, frame+4, ETH_MAC_LEN);
   memcpy(pi.station, frame+10, ETH_MAC_LEN);
-  memcpy(pi.bssid, frame+16, ETH_MAC_LEN);
+  //memcpy(pi.bssid, frame+16, ETH_MAC_LEN);
   return pi;
   
   if ((pi.station[0] & 2) == 2) pi.channel=-2; // Randomised MAC !

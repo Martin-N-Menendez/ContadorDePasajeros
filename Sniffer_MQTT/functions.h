@@ -16,7 +16,7 @@ extern int RSSILimit;
 
 #define MAX_APS_TRACKED 0
 #define MAX_CLIENTS_TRACKED 0
-#define MAX_PROBES_TRACKED 260
+#define MAX_PROBES_TRACKED 300
 
 #define CLIENT_DEBUG 0
 #define BEACON_DEBUG 0
@@ -24,14 +24,13 @@ extern int RSSILimit;
 
 clientinfo clients_known[MAX_CLIENTS_TRACKED];            // Array to save MACs of known CLIENTs
 beaconinfo aps_known[MAX_APS_TRACKED];                    // Array to save MACs of known APs
-probeinfo probes_known[MAX_PROBES_TRACKED+1];                // Array to save MACs of known PROBEs
+probeinfo probes_known[MAX_PROBES_TRACKED];                // Array to save MACs of known PROBEs
 
-int nothing_new = 0;
+volatile uint8_t nothing_new = 0;
 
-int clients_known_count = 0;                              // Number of known CLIENTs
-int aps_known_count = 0;                                  // Number of known APs
-int probes_known_count = 0;                              // Number of known  PROBEs
-
+uint16_t clients_known_count = 0;                              // Number of known CLIENTs
+uint16_t aps_known_count = 0;                                  // Number of known APs
+volatile uint16_t probes_known_count = 0;                              // Number of known  PROBEs
 
 String formatMac1(uint8_t mac[ETH_MAC_LEN]) {
   String hi = "";

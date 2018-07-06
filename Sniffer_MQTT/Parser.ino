@@ -1,6 +1,6 @@
 
-#define PURGETIME 150
-#define MINRSSI -90
+#define PURGETIME 150000
+#define MINRSSI -99
 #define SENDTIME 120
 #define TIMES_SEEN 10
 
@@ -9,6 +9,7 @@ int RSSILimit = MINRSSI;
 int SendTime = SENDTIME;
 int TimesSeen = TIMES_SEEN;
 
+/*
 void recvWithStartEndMarkers() {
     static boolean recvInProgress = false;
     static int ndx = 0;
@@ -67,3 +68,4 @@ void parseData(void){
 void showParsedData() {
     Serial.printf("[%i|%i|%i|%i\n",purge,RSSILimit,SendTime,TimesSeen);
 }
+*/

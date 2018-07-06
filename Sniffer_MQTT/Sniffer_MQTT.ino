@@ -1,18 +1,19 @@
 #include "Sniffer.h"
+#include "functions.h"
 
-boolean newData = false;
+//boolean newData = false;
 extern int purge;
 extern int RSSILimit;
 extern int SendTime;
 extern int TimesSeen;
 
-unsigned int channel = 1;
+uint8_t channel = 1;
 uint32_t sendEntry = 0;
-int state = 0;
-unsigned int people = 0;
+//int state = 0;
+volatile uint16_t people = 0;
 
-char receivedChars[BUFFER_IN];
-char tempChars[BUFFER_IN];
+//char receivedChars[BUFFER_IN];
+//char tempChars[BUFFER_IN];
 
 extern void sendMQTT();
 WiFiClient net;
@@ -25,19 +26,19 @@ void setup() {
   #endif
   WiFi.mode(WIFI_STA);
   WiFi.setOutputPower(-TXPOWER);
-  connectToWiFi();
-  client.begin("broker.shiftr.io",net);
-  
+  //ReconnectWiFi();
+  client.begin("linsse.com.ar", 2000 ,net);
+  //client.begin("broker.shiftr.io",net); 
   client.onMessage(messageReceived);
 
-  connect();
+  ReconnectWiFi();
   
   snifferSetup();
   Serial.setRxBufferSize(BUFFER_SIZE);
   pinMode(LED, OUTPUT);
 }
 
-void connectToWiFi() {
+void ReconnectWiFi() {
   int retry = 0;
 
   delay(10);// We start by connecting to a WiFi network
@@ -58,12 +59,12 @@ void connectToWiFi() {
   Serial.println(WIFI_SSID);
   #endif
 
-  channel = 11;
+  channel = 1;
   wifi_set_channel(channel);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD, channel);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while(WiFi.status() != WL_CONNECTED) {
     delay(500);
   #if(DEBUG_MODE)
     Serial.print(".");
@@ -137,7 +138,7 @@ void purgeDevice() {
      Serial.printf("Descartando Probe: %d -> Ausente\r\n", u + 1);
      #endif
       #if(SENDER_MODE)
-      state = 0;
+      //state = 0;
       uint32_t lht = (now - probes_known[u].lastDiscoveredTime);
        /*
        Serial.printf("<%i|",state);
@@ -164,7 +165,7 @@ void sendDevices() {
   Serial.println("AP ==> STATION");
 #endif
   delay(100);
-  connectToWiFi();
+  ReconnectWiFi();
   delay(100);
 
 #if(DEBUG_MODE)

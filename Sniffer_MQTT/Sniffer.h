@@ -1,9 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <MQTT.h>
 #include <string.h>
-#include "functions.h"
 
-#define WIFI_CHOSEN 3  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo
+
+#define WIFI_CHOSEN 2  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo
 
 // ####################### Redes a elegir ########################
 #if(WIFI_CHOSEN==1)
