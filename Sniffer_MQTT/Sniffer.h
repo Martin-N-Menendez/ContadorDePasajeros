@@ -2,8 +2,7 @@
 #include <MQTT.h>
 #include <string.h>
 
-
-#define WIFI_CHOSEN 2  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo
+#define WIFI_CHOSEN 7  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo, 5: Ari 6:PabloCel 7:PabloCel2
 
 // ####################### Redes a elegir ########################
 #if(WIFI_CHOSEN==1)
@@ -25,6 +24,23 @@
 #define WIFI_SSID "WiFi-Arnet-3b37"
 #define WIFI_PASSWORD "33B3FF74EE"
 #endif
+
+#if(WIFI_CHOSEN==5)
+#define WIFI_SSID "alutenberg"
+#define WIFI_PASSWORD "contador2018"
+#endif
+
+#if(WIFI_CHOSEN==6)
+#define WIFI_SSID "pgomez"
+#define WIFI_PASSWORD "contador2018"
+#endif
+
+#if(WIFI_CHOSEN==7)
+#define WIFI_SSID "WT19a"
+#define WIFI_PASSWORD "contador2018"
+#endif
+
+
 
 #define BAUD_RATE 115200
 #define DISABLE 0

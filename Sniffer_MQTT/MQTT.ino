@@ -1,11 +1,11 @@
 #include "Stations.h"
 #include "Sniffer.h"
 
-#define LINE LINEA1
+#define LINE LINEA2
 #define TRAIN 1
-#define CAR 1
+#define CAR 5
 
-#define SENDER "Martin"
+#define SENDER "PruebaTBA1"
 #define USER "fb033abd"
 #define KEY "e2ebc570ab73e0b5"
 
@@ -18,14 +18,19 @@ MQTTClient client(256);
 
 // ################ Enviar por MQTT ############
 void sendMQTT(){
+  int retry = 0;
   client.loop();
   delay(10);  // <- fixes some issues with WiFi stability
   
   if (!client.connected()) {
     if(!connect())
     {
-      Serial.println("Falla de conexion ... Abortando subida de datos");
-      return;
+      retry++;
+      if(retry >3)
+      {
+       Serial.println("Falla de conexion ... Abortando subida de datos");
+       return;
+      }
     }
   }
   client.subscribe(ADDRESS);
@@ -46,7 +51,7 @@ void sendMQTT(){
   }
   client.subscribe(ADDRESS);
   delay(150);
-  
+  /*
   for(int u=0; u < probes_known_count; u++)
   { 
      int j=0;
@@ -71,6 +76,7 @@ void sendMQTT(){
      client.subscribe(ADDRESS+String(u+1)+"/");
      delay(150);
   }
+  */
 }
 
 // ################ Reconectar Wifi y MQTT server ############
@@ -87,7 +93,7 @@ boolean connect() {
     if (retry > 20)
     {
       #if(DEBUG_MODE)
-      Serial.println("Wifi > No se pudo conectar");
+      Serial.println("Wifi > Se perdió la conexión");
       #endif
       return false;
     }

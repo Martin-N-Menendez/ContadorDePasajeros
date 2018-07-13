@@ -1,4 +1,3 @@
-
 #define L0 "Invalido"
 #define L1 "Roca"
 #define L2 "San_Martin"

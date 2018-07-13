@@ -35,7 +35,7 @@ void setup() {
   
   snifferSetup();
   Serial.setRxBufferSize(BUFFER_SIZE);
-  pinMode(LED, OUTPUT);
+  //pinMode(LED, OUTPUT);
 }
 
 void ReconnectWiFi() {
@@ -181,7 +181,7 @@ void sendDevices() {
 }
 
 void loop() {
-  digitalWrite(LED, !LOW);
+  //digitalWrite(LED, !LOW);
   channel = 1;
   boolean sendInfo = false;
   uint32_t now = millis() / 1000;
@@ -216,7 +216,7 @@ void loop() {
   }
   */  
   if (sendInfo) {
-    digitalWrite(LED, !HIGH);
+    //digitalWrite(LED, !HIGH);
     showDevices();   
     sendDevices();
   }
