@@ -13,6 +13,7 @@
 String Json = "";
 
 extern volatile uint16_t probes_known_count;  
+extern void ReconnectWiFi();
 
 MQTTClient client(256);
 
@@ -23,7 +24,7 @@ void sendMQTT(){
   delay(10);  // <- fixes some issues with WiFi stability
   
   if (!client.connected()){
-    if(!connect())
+    if(!MQttconnect())
     {
       retry++;
       delay(500);
@@ -46,7 +47,7 @@ void sendMQTT(){
   {
     j++;
     Serial.println("Falla al enviar cabecera");
-    connect();
+    MQttconnect();
     Serial.print("MQTT > ");
     client.publish(ADDRESS,Header);
     if(j>=3) break;
@@ -82,7 +83,7 @@ void sendMQTT(){
 }
 
 // ################ Reconectar Wifi y MQTT server ############
-boolean connect() {
+boolean MQttconnect() {
   int retry = 0;
   while(WiFi.status() != WL_CONNECTED) {
     ReconnectWiFi();
@@ -95,9 +96,11 @@ boolean connect() {
    }
   
   Serial.println();
+
+  client.disconnect();
   
   retry = 0;
-  while (!client.connect(SENDER,USER,KEY)) {
+  while (!client.connect(SENDER)) {
     delay(500);
     Serial.print(".");
     retry++;
