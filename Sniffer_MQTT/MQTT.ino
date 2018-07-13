@@ -22,17 +22,19 @@ void sendMQTT(){
   client.loop();
   delay(10);  // <- fixes some issues with WiFi stability
   
-  if (!client.connected()) {
+  if (!client.connected()){
     if(!connect())
     {
       retry++;
-      if(retry >3)
+      delay(500);
+      if(retry > 10)
       {
-       Serial.println("Falla de conexion ... Abortando subida de datos");
+       Serial.println("\r\n Falla de conexion ... Abortando subida de datos");
        return;
       }
     }
   }
+  
   client.subscribe(ADDRESS);
   delay(150);
 
@@ -85,7 +87,7 @@ boolean connect() {
   
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while(WiFi.status() != WL_CONNECTED) {
-    delay(500);
+  delay(500);
   #if(DEBUG_MODE)
     Serial.print(".");
   #endif
@@ -93,11 +95,13 @@ boolean connect() {
     if (retry > 20)
     {
       #if(DEBUG_MODE)
-      Serial.println("Wifi > Se perdió la conexión");
+      Serial.println("\r\n Wifi > Se perdió la conexión");
       #endif
       return false;
     }
   }
+  Serial.println();
+  
   retry = 0;
   while (!client.connect(SENDER,USER,KEY)) {
     delay(500);
@@ -105,11 +109,11 @@ boolean connect() {
     retry++;
     if (retry > 20)
     {
-      Serial.println("MQTT > No se pudo conectar");
+      Serial.println("\r\n MQTT > No se pudo conectar");
       return false;
     }
   }
-  Serial.println("MQTT > Conectado");
+  Serial.println("\r\n MQTT > Conectado");
   //client.subscribe(address);
   //client.unsubscribe("/hello");
   return true;
