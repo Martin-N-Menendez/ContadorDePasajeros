@@ -2,7 +2,7 @@
 #include <MQTT.h>
 #include <string.h>
 
-#define WIFI_CHOSEN 7  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo, 5: Ari 6:PabloCel 7:PabloCel2
+#define WIFI_CHOSEN 1  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo, 5: Ari 6:PabloCel 7:PabloCel2
 
 // ####################### Redes a elegir ########################
 #if(WIFI_CHOSEN==1)

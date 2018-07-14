@@ -12,7 +12,9 @@
 #define ADDRESS "/cdp/"+String(lines[LINE])+"/Formacion_"+TRAIN+"/Coche_"+CAR+"/"
 String Json = "";
 
+extern WiFiClient client_wifi;
 extern volatile uint16_t probes_known_count;  
+extern bool ConnectWiFi();
 
 MQTTClient client(256);
 
@@ -23,33 +25,38 @@ void sendMQTT(){
   delay(10);  // <- fixes some issues with WiFi stability
   
   if (!client.connected()){
-    if(!connect())
+    if(!MQTTconnect())
     {
       retry++;
-      delay(500);
-      if(retry > 10)
+      Serial.print(" --> Reintentando");
+      Serial.print(retry);
+      Serial.println("/3");
+      delay(100);
+      if(retry > 3)
       {
        Serial.println("\r\n Falla de conexion ... Abortando subida de datos");
        return;
       }
     }
   }
+
+  BreakMQTT();
   
   client.subscribe(ADDRESS);
   delay(150);
 
-  int j=0;
+  retry = 0;
   Serial.print("MQTT > ");
   String Header = "";
   Header += "{\"Id\":\""+String(SENDER)+"\",\"Type\":\"Header\",\"People\":"+people+",\"MACs\":"+probes_known_count+"}";
   while(!client.publish(ADDRESS,Header))
   {
-    j++;
+    retry++;
     Serial.println("Falla al enviar cabecera");
-    connect();
-    Serial.print("MQTT > ");
-    client.publish(ADDRESS,Header);
-    if(j>=3) break;
+    MQTTconnect();
+    //Serial.print("MQTT > ");
+    //client.publish(ADDRESS,Header);
+    if(retry > 3) break;
   }
   client.subscribe(ADDRESS);
   delay(150);
@@ -82,30 +89,16 @@ void sendMQTT(){
 }
 
 // ################ Reconectar Wifi y MQTT server ############
-boolean connect() {
+boolean MQTTconnect() {
   int retry = 0;
-  
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while(WiFi.status() != WL_CONNECTED) {
-  delay(500);
-  #if(DEBUG_MODE)
-    Serial.print(".");
-  #endif
-    retry++;
-    if (retry > 20)
-    {
-      #if(DEBUG_MODE)
-      Serial.println("\r\n Wifi > Se perdió la conexión");
-      #endif
-      return false;
-    }
-  }
-  Serial.println();
-  
-  retry = 0;
-  while (!client.connect(SENDER,USER,KEY)) {
+    
+  client.disconnect();
+  delay(100);
+  client.begin("linsse.com.ar", 2000 ,client_wifi);
+
+  while (!client.connect(SENDER)) {
     delay(500);
-    Serial.print(".");
+    Serial.print("*");
     retry++;
     if (retry > 20)
     {
@@ -113,15 +106,29 @@ boolean connect() {
       return false;
     }
   }
-  Serial.println("\r\n MQTT > Conectado");
-  //client.subscribe(address);
-  //client.unsubscribe("/hello");
+  Serial.println("\r\nMQTT > Conectado");
+
+  client.subscribe(ADDRESS);
+ 
+  
   return true;
 }
 
 // ################ Mensaje recibido ############
 void messageReceived(String &topic, String &payload) {
-  Serial.println("Leyendo: " + topic + " - " + payload);
+  Serial.println("MQTT > Leyendo: " + topic + " - " + payload);
+}
+
+// ################ Romper aleatoriamente la conexion al broker ############
+void BreakMQTT(){
+  int i = random(0,5);
+
+  if(i == 2)
+  {
+    Serial.println("BROKER > ESTO SE VA A DESCONECTAAAR!");
+    client.disconnect();
+  }
+  
 }
 
 // ################ Mensaje recibido ############
@@ -131,7 +138,7 @@ void GenerateInsane() {
   delay(10);  // <- fixes some issues with WiFi stability
 
   if (!client.connected()) {
-    if(!connect())
+    if(!MQTTconnect())
     {
       Serial.println("Falla de conexion ... Abortando subida de datos");
       return;

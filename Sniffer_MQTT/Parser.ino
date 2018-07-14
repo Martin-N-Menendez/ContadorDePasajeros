@@ -1,7 +1,7 @@
 
 #define PURGETIME 15000
 #define MINRSSI -99
-#define SENDTIME 180
+#define SENDTIME 30
 #define TIMES_SEEN 3
 
 int purge = PURGETIME;

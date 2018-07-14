@@ -16,7 +16,10 @@ volatile uint16_t people = 0;
 //char tempChars[BUFFER_IN];
 
 extern void sendMQTT();
-WiFiClient net;
+extern boolean MQTTconnect();
+bool ConnectWiFi();
+
+WiFiClient client_wifi;
 extern MQTTClient client;
 
 void setup() {
@@ -26,21 +29,30 @@ void setup() {
   #endif
   WiFi.mode(WIFI_STA);
   WiFi.setOutputPower(-TXPOWER);
-  //ReconnectWiFi();
-  client.begin("linsse.com.ar", 2000 ,net);
-  //client.begin("broker.shiftr.io",net); 
+  //ConnectWiFi();
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  client.begin("linsse.com.ar", 2000 ,client_wifi);
+  //client.begin("broker.shiftr.io",client_wifi); 
   client.onMessage(messageReceived);
 
-  ReconnectWiFi();
+  //ConnectWiFi();
   
   snifferSetup();
-  Serial.setRxBufferSize(BUFFER_SIZE);
+  //Serial.setRxBufferSize(BUFFER_SIZE);
   //pinMode(LED, OUTPUT);
 }
 
-void ReconnectWiFi() {
-  int retry = 0;
+void SnifferStop(){
+  #if(DEBUG_MODE)
+  Serial.println("Sniffer > OFF");
+  #endif
+  wifi_promiscuous_enable(DISABLE);
+  #if(DEBUG_MODE)
+  Serial.println("AP ==> STATION");
+  #endif
+}
 
+void StationBegin(){
   delay(10);// We start by connecting to a WiFi network
   #if(DEBUG_MODE)
   Serial.println("STATION > Configurando modo estacion");
@@ -54,6 +66,11 @@ void ReconnectWiFi() {
   WiFi.mode(WIFI_OFF);
 
   WiFi.mode(WIFI_STA);
+}
+
+bool ConnectWiFi(){
+  int retry = 0;
+
   #if(DEBUG_MODE)
   Serial.print("STATION > Conectando al SSID: ");
   Serial.println(WIFI_SSID);
@@ -66,16 +83,16 @@ void ReconnectWiFi() {
 
   while(WiFi.status() != WL_CONNECTED) {
     delay(500);
-  #if(DEBUG_MODE)
-    Serial.print(".");
-  #endif
+    #if(DEBUG_MODE)
+      Serial.print(".");
+    #endif
     retry++;
     if (retry > 20)
     {
-  #if(DEBUG_MODE)
-      Serial.println(" -> No conectado");
-  #endif
-      return;
+    #if(DEBUG_MODE)
+      Serial.print(" -> No conectado");
+    #endif
+      return false;
     }
   }
 #if(DEBUG_MODE)
@@ -83,6 +100,7 @@ void ReconnectWiFi() {
   Serial.print("STATION > Dirreccion IP: ");
   Serial.println(WiFi.localIP());
 #endif
+  return true;
 }
 
 void snifferSetup() {
@@ -105,6 +123,14 @@ void calculatePeople() {
     }
   }
   people = i;
+}
+
+void SnifferBegin(){
+  #if(DEBUG_MODE)
+  Serial.println("Sniffer > ON");
+  #endif
+  wifi_promiscuous_enable(ENABLE);
+  sendEntry = millis() / 1000;
 }
 
 void purgeDevice() {
@@ -156,28 +182,31 @@ void purgeDevice() {
 
 void sendDevices() {
   int retry = 0;
-  WiFiClient client;
-#if(DEBUG_MODE)
-  Serial.println("Sniffer > OFF");
-#endif
-  wifi_promiscuous_enable(DISABLE);
-#if(DEBUG_MODE)
-  Serial.println("AP ==> STATION");
-#endif
+  
+  //WiFiClient client_wifi;
+  
+  SnifferStop();
+  StationBegin();
+  
   delay(100);
-  ReconnectWiFi();
+  if(!ConnectWiFi())
+  {
+    Serial.println("WiFi > Falla de conexion --> Envio de datos anulado");
+    SnifferBegin();
+    return;
+  }
   delay(100);
 
-#if(DEBUG_MODE)
+  #if(DEBUG_MODE)
   Serial.println("CLIENT > Conectandose a la base de datos de: MQTT");
-#endif
+  #endif
+  MQTTconnect();
+  #if(DEBUG_MODE)
+  Serial.println("MQTT > Enviando datos");
+  #endif
   sendMQTT();
   //GenerateInsane();
-#if(DEBUG_MODE)
-  Serial.println("Sniffer > ON");
-#endif
-  wifi_promiscuous_enable(ENABLE);
-  sendEntry = millis() / 1000;
+  SnifferBegin();
 }
 
 void loop() {
@@ -196,7 +225,7 @@ void loop() {
       wifi_set_channel(channel);
     }
     delay(1);  // critical processing timeslice for NONOS SDK! No delay(0) yield()
-    if ((now - sendEntry) > SendTime) {
+    if((now - sendEntry) > SendTime){
       sendEntry = millis() / 1000;
       sendInfo = true;
     }
@@ -217,7 +246,7 @@ void loop() {
   */  
   if (sendInfo) {
     //digitalWrite(LED, !HIGH);
-    showDevices();   
+    //showDevices();
     sendDevices();
   }
 }
