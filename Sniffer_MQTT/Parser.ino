@@ -1,7 +1,7 @@
 
 #define PURGETIME 15000
 #define MINRSSI -99
-#define SENDTIME 30
+#define SENDTIME 10*60
 #define TIMES_SEEN 3
 
 int purge = PURGETIME;
@@ -69,3 +69,4 @@ void showParsedData() {
     Serial.printf("[%i|%i|%i|%i\n",purge,RSSILimit,SendTime,TimesSeen);
 }
 */
+

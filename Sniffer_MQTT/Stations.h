@@ -10,3 +10,4 @@
 typedef enum{LINEA0,LINEA1,LINEA2,LINEA3,LINEA4,LINEA5}t_lines;
 
 const char* lines[]={L0,L1,L2,L3,L4,L5};
+

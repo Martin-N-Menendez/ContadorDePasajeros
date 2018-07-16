@@ -110,3 +110,4 @@ void showDevices() {
   showInformation(now);
   showRandom(now);
 }
+
