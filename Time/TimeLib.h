@@ -18,7 +18,7 @@
 
 
 #if !defined(__time_t_defined) // avoid conflict with newlib or other posix libc
-typedef uint64_t time_t;
+typedef unsigned long time_t;
 #endif
 
 
