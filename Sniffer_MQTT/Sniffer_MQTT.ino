@@ -19,8 +19,12 @@ extern void sendMQTT();
 extern boolean MQTTconnect();
 bool ConnectWiFi();
 
+String date;
 WiFiClient client_wifi;
 extern MQTTClient client;
+WiFiUDP udp;
+
+NTPClient ntp(udp, "ca.pool.ntp.org", -3 * 3600, 60000);
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -40,6 +44,8 @@ void setup() {
   snifferSetup();
   //Serial.setRxBufferSize(BUFFER_SIZE);
   //pinMode(LED, OUTPUT);
+  ntp.begin();
+  //ntp.forceUpdate();
 }
 
 void SnifferStop(){
@@ -197,6 +203,12 @@ void sendDevices() {
   }
   delay(100);
 
+  ntp.forceUpdate();
+  date = ntp.getFormattedTime();
+  //Serial.println(ntp.getFormattedTime());
+
+  delay(100);
+
   #if(DEBUG_MODE)
   Serial.println("CLIENT > Conectandose a la base de datos de: MQTT");
   #endif
@@ -244,6 +256,12 @@ void loop() {
     newData = false;
   }
   */  
+
+  //timeClient.update();
+  //hora = ntp.getFormattedTime();
+  
+  //Serial.println(ntp.getFormattedTime());
+  
   if (sendInfo) {
     //digitalWrite(LED, !HIGH);
     //showDevices();

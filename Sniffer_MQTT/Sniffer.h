@@ -1,6 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <MQTT.h>
 #include <string.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 #define WIFI_CHOSEN 1  // 1: Martin , 2: Mi celular, 3: Trenes Argentinos, 4: Pablo, 5: Ari 6:PabloCel 7:PabloCel2
 

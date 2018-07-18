@@ -12,6 +12,7 @@
 #define ADDRESS "/cdp/"+String(lines[LINE])+"/Formacion_"+TRAIN+"/Coche_"+CAR+"/"
 String Json = "";
 
+extern String date;
 extern WiFiClient client_wifi;
 extern volatile uint16_t probes_known_count;
 extern bool ConnectWiFi();
@@ -48,7 +49,7 @@ void sendMQTT() {
   retry = 0;
   //Serial.print("MQTT > ");
   String Header = "";
-  Header += "{\"Id\":\"" + String(SENDER) + "\",\"Type\":\"Header\",\"People\":" + people + ",\"MACs\":" + probes_known_count + "}";
+  Header += "{\"Id\":\"" + String(SENDER) + "\",\"Date\":\"" + date + "\",\"Type\":\"Header\",\"People\":" + people + ",\"MACs\":" + probes_known_count + "}";
   while (!client.publish(ADDRESS, Header))
   {
     retry++;
