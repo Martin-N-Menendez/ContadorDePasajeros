@@ -21,6 +21,6 @@ Nuevo: Indicador de duracion de ejecucion
 
 Nuevo: Monitor de bateria
 
-Nuevo: Subida a MQTT en un solo bloque
+Nuevo: Subida a MQTT en un solo bloque (NO! en revision! -> Por ahora es bloque a bloque)
 
 Nuevo: Hasta 400 dispositivos
