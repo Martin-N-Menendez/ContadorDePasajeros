@@ -18,7 +18,7 @@ const char* lines[]={L0,L1,L2,L3,L4,L5};
 /*################## Configuracion ################*/
 ADC_MODE(ADC_VCC);                            // Pin a sensar (Conectar A0 con 3V para medir 3.3V)
 #define SERIAL_SET_DEBUG_OUTPUT  false        // Activar modo debug
-const uint16_t MAX_DEVICES = 200;             // Maxima cantidad de dispositivos a almacenar
+const uint16_t MAX_DEVICES = 400;             // Maxima cantidad de dispositivos a almacenar
 const int8_t MIN_RSSI = -99;                  // Minima RSSI que debe tener un dispositivo para ser almacenado
 const uint32_t LIST_TIMEOUT = 150*1000;       // Maxima tolerancia (segundos) antes de eliminar un dispositivo
 const uint16_t REPORTED = 50;                 // Minima cantidad de reportes para ser considerado pasajero
@@ -27,7 +27,8 @@ const uint16_t SENDTIME = 10*60;              // Cantidad de segundos para envia
 #define LINE LINEA2                           // Linea de Trenes Argentinos (ver Trenes)
 #define TRAIN 1                               // Numero de formacion
 #define CAR 5                                 // Numero de coche (1a7 o 1a9 segun linea)
-
+uint16_t N_devices;
+uint16_t people;
 /*################## WiFi ################*/
 const char *ESP_NAME = "Contador de pasajeros"; // Host name
 const char *AP_SSID = "GICSAFe";                // Nombre del AP

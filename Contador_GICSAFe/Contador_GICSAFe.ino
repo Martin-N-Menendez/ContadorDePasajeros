@@ -16,8 +16,8 @@ WiFiEventHandler probeRequestHandler;
 
 clt_device_t devicelist[MAX_DEVICES];
 
-char jsonString[JBUFFER];
-StaticJsonBuffer<JBUFFER>  jsonBuffer;
+//char jsonString[JBUFFER];
+StaticJsonBuffer<200> jsonBuffer;
 
 uint64_t sendEntry = 0;
 
@@ -44,9 +44,9 @@ void loop() {
     }
     mqttClient.loop();
 
-    // Handle devices list
-    checkList();
-
+    calculatePeople(); 
+    checkList();    // Handle devices list
+    
     if (millis() - sendEntry > SENDTIME * 1000) {
       sendEntry = millis();
       jSonToMQTT();
@@ -55,25 +55,20 @@ void loop() {
 
 void jSonToMQTT(){
 
-  uint8_t i, c = 0, people = 0;
-
-   // Count devices
-    for (i = 0; i < MAX_DEVICES; i++){       
-        if ((devicelist[i].mac != "") && (devicelist[i].rssi != 0)){
-            c++;
-            if(devicelist[i].reported > REPORTED)
-              people++;
-        }        
-    } 
+  uint16_t i;
+  String date = getTime();
     
   jsonBuffer.clear();
   
   JsonObject& root = jsonBuffer.createObject();
 
-  //root["Devices"] = c;
-  //root["People"] = people;
-  //root["Battery"] = (float)ESP.getVcc()/1024.0
+  root["Devices"] = N_devices;
+  root["People"] = people;
+  root["Battery"] = (float)ESP.getVcc()/1024.0;
+  root["Duration"] = date;
+  root["Heap"] = ESP.getFreeHeap();
   
+  /*
   JsonArray& jMAC = root.createNestedArray("MAC");
   JsonArray& jRSSI = root.createNestedArray("RSSI");  
   JsonArray& jREPORTED = root.createNestedArray("REPORTED");  
@@ -89,10 +84,12 @@ void jSonToMQTT(){
       jREPORTED.add(devicelist[i].reported); 
     }        
    }    
-    
+  */ 
     Serial.println("---------JSON--------");
     root.prettyPrintTo(Serial);
-    root.printTo(jsonString);
+    Serial.println("---------JSON--------");
+    
+ /*   root.printTo(jsonString);
 
     mqttClient.subscribe(MQTT_OUT_TOPIC);
     if (mqttClient.publish(MQTT_OUT_TOPIC, jsonString) == 1) 
@@ -102,12 +99,12 @@ void jSonToMQTT(){
       Serial.printf("\r\nMQTT > Error al publicar\r\n");
     }
     mqttClient.subscribe(MQTT_OUT_TOPIC);
-  
+  */ 
 }
 
 void checkList() {
 
-    uint8_t i;
+    uint16_t i;
     for (i = 0; i < MAX_DEVICES; i++) {
         if (devicelist[i].mac != "" && (millis() - devicelist[i].ms > LIST_TIMEOUT * 1000)) {
             mqttClient.subscribe(MQTT_OUT_TOPIC);
@@ -136,30 +133,50 @@ void checkList() {
     }
 }
 
-void printlist() {
-
-    uint8_t i, c = 0, people = 0;
-
-    uint32_t timeNow = millis();
+String getTime() {
+  String date = "";
+  uint32_t timeNow = millis();
     
-    uint16_t days = timeNow / day ;                                
-    uint8_t hours = (timeNow % day) / hour;                       
-    uint8_t minutes = ((timeNow % day) % hour) / minute ;         
-    uint8_t seconds = (((timeNow % day) % hour) % minute) / second;
-     
+  uint16_t days = timeNow / day ;                                
+  uint8_t hours = (timeNow % day) / hour;                       
+  uint8_t minutes = ((timeNow % day) % hour) / minute ;         
+  uint8_t seconds = (((timeNow % day) % hour) % minute) / second;
+
+  date += (days<10)?('0'+String(days)):(String(days));
+  date += ':';
+  date += (hours<10)?('0'+String(hours)):(String(hours));
+  date += ':';
+  date += (minutes<10)?('0'+String(minutes)):(String(minutes));
+  date += ':';
+  date += (seconds<10)?('0'+String(seconds)):(String(seconds));
+
+  return date;  
+}
+
+void calculatePeople() {
+  uint16_t i;
+
+  N_devices = 0;
+  people = 0;
+  
     // Count devices
     for (i = 0; i < MAX_DEVICES; i++){       
         if ((devicelist[i].mac != "") && (devicelist[i].rssi != 0)){
-            c++;
+            N_devices++;
             if(devicelist[i].reported > REPORTED)
               people++;
         }        
-    } 
-  
-    Serial.printf("\r\nDispositivos: %d | Personas: %d | Tension: %.2f V (Funcionando hace %02ld:%02ld:%02ld:%02ld)\r\n", c,people,(float)ESP.getVcc()/1024.0,(long int)days,(long int)hours,(long int)minutes,(long int)seconds);
+    }  
+}
 
-    // List devices
-    if (c > 0) {
+void printlist() {
+    
+    uint16_t i;
+    String date = getTime();
+   
+    Serial.printf("\r\nDispositivos: %d | Personas: %d | Tension: %.2f V (Funcionando hace %s)\r\n", N_devices,people,(float)ESP.getVcc()/1024.0,date.c_str());
+        
+    if (N_devices > 0) {                  // List devices
         for (i = 0; i < MAX_DEVICES; i++) {
             if (devicelist[i].mac != "") {
                 Serial.printf(
@@ -179,7 +196,7 @@ void onProbeRequest(const WiFiEventSoftAPModeProbeRequestReceived &evt) {
 
     String mac = macToString(evt.mac);
 
-    uint8_t i;
+    uint16_t i;
     for (i = 0; i < MAX_DEVICES; i++) {
         if (devicelist[i].mac == mac) {
             // Update device
@@ -190,16 +207,19 @@ void onProbeRequest(const WiFiEventSoftAPModeProbeRequestReceived &evt) {
         }
     }
 
-    if(evt.rssi >= MIN_RSSI)
+    if(evt.rssi <= MIN_RSSI)
+    {
+      Serial.printf("%d,%d\r\n",evt.rssi,MIN_RSSI);
       return;
-              
+    }         
+    
     for (i = 0; i < MAX_DEVICES; i++) {
         if (devicelist[i].mac == "") {
           
             //Add device
             devicelist[i] = {.mac = mac, .rssi = (int8_t)evt.rssi, .ms = millis(), .reported = 0};
             
-            Serial.printf("[Device In] MAC: %s, RSSI: %d, LHT: %u Reported: %d\n", mac.c_str(), evt.rssi,(unsigned int)(devicelist[i].ms-millis()),devicelist[i].reported);
+            Serial.printf("[Device In] MAC: %s, RSSI: %d, LHT: %u Reported: %d\n", mac.c_str(), evt.rssi,millis(),devicelist[i].reported);
 
             mqttClient.subscribe(MQTT_OUT_TOPIC);
             // Publish "In" event
