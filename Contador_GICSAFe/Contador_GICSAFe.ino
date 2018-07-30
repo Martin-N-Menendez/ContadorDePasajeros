@@ -17,7 +17,7 @@ WiFiEventHandler probeRequestHandler;
 clt_device_t devicelist[MAX_DEVICES];
 
 //char jsonString[JBUFFER];
-StaticJsonBuffer<200> jsonBuffer;
+//StaticJsonBuffer<200> jsonBuffer;
 
 uint64_t sendEntry = 0;
 
@@ -56,38 +56,25 @@ void loop() {
 void jSonToMQTT(){
 
   uint16_t i;
-  String date = getTime();
-    
-  jsonBuffer.clear();
+  String date = getTime();  
   
-  JsonObject& root = jsonBuffer.createObject();
+  Serial.println("---------JSON--------");
+  //root.prettyPrintTo(Serial);
+  //Serial.println("\r\n---------JSON--------");
 
-  root["Devices"] = N_devices;
-  root["People"] = people;
-  root["Battery"] = (float)ESP.getVcc()/1024.0;
-  root["Duration"] = date;
-  root["Heap"] = ESP.getFreeHeap();
+  Serial.printf("[Header] Dispositivos: %d, Personas: %d, Batería: %.2fV, Duración: %s, Heap: %d\n", N_devices, people,(float)ESP.getVcc()/1024.0,date.c_str(),ESP.getFreeHeap());
+
+  Serial.println("\r\n---------JSON--------");
   
-  /*
-  JsonArray& jMAC = root.createNestedArray("MAC");
-  JsonArray& jRSSI = root.createNestedArray("RSSI");  
-  JsonArray& jREPORTED = root.createNestedArray("REPORTED");  
-  JsonArray& jLHT = root.createNestedArray("LHT");
-
-  for (int i = 0; i < MAX_DEVICES; i++)
-  {      
-    if (devicelist[i].mac != "")
-    {
-      jMAC.add((devicelist[i].mac).c_str()); 
-      jRSSI.add(devicelist[i].rssi);
-      jLHT.add((millis() - devicelist[i].ms) / 1000UL);  
-      jREPORTED.add(devicelist[i].reported); 
-    }        
-   }    
-  */ 
-    Serial.println("---------JSON--------");
-    root.prettyPrintTo(Serial);
-    Serial.println("---------JSON--------");
+   mqttClient.subscribe(MQTT_OUT_TOPIC);
+   // Publish "In" event
+   char msg[110] = "";
+   snprintf(msg, sizeof(msg),
+      "{\"Type\":\"header\",\"Devices\":\"%d\",\"People\":%d,\"Batería\":%.2fV,\"Duración\":%s,\"heap\":%d}",
+      N_devices, people,(float)ESP.getVcc()/1024.0,date.c_str(),ESP.getFreeHeap()
+    );
+    mqttClient.publish(MQTT_OUT_TOPIC, msg);
+    mqttClient.subscribe(MQTT_OUT_TOPIC);
     
  /*   root.printTo(jsonString);
 
@@ -100,6 +87,8 @@ void jSonToMQTT(){
     }
     mqttClient.subscribe(MQTT_OUT_TOPIC);
   */ 
+  
+  
 }
 
 void checkList() {
@@ -109,7 +98,7 @@ void checkList() {
         if (devicelist[i].mac != "" && (millis() - devicelist[i].ms > LIST_TIMEOUT * 1000)) {
             mqttClient.subscribe(MQTT_OUT_TOPIC);
             // Publish "Out" event
-            char msg[90] = "";
+            char msg[110] = "";
             snprintf(msg, sizeof(msg),
                      "{\"event\":\"out\",\"mac\":\"%s\",\"rssi\":%d,\"uptime\":%d,\"heap\":%d}",
                      (devicelist[i].mac).c_str(), devicelist[i].rssi, getUptimeSecs(), ESP.getFreeHeap()
@@ -194,6 +183,8 @@ void printlist() {
   
 void onProbeRequest(const WiFiEventSoftAPModeProbeRequestReceived &evt) {
 
+    //da:a1:19:XX:XX:XX son RANDOM, hay que filtrar
+    
     String mac = macToString(evt.mac);
 
     uint16_t i;
@@ -223,7 +214,7 @@ void onProbeRequest(const WiFiEventSoftAPModeProbeRequestReceived &evt) {
 
             mqttClient.subscribe(MQTT_OUT_TOPIC);
             // Publish "In" event
-            char msg[90] = "";
+            char msg[110] = "";
             snprintf(msg, sizeof(msg),
                      "{\"event\":\"in\",\"mac\":\"%s\",\"rssi\":%d,\"reported\":%d,\"uptime\":%d,\"heap\":%d}",
                      mac.c_str(), evt.rssi,devicelist[i].reported, getUptimeSecs(), ESP.getFreeHeap()
@@ -251,6 +242,7 @@ void initSerial() {
     Serial.printf("Sketch size:        %s\n", prettyBytes(ESP.getSketchSize()).c_str());
     Serial.printf("Free Sketch size:   %s\n", prettyBytes(ESP.getFreeSketchSpace()).c_str());
     Serial.printf("Chip size:          %s\n", prettyBytes(ESP.getFlashChipRealSize()).c_str());
+    Serial.printf("Heap size:          %s\n", prettyBytes(ESP.getFreeHeap()).c_str());
     Serial.printf("SDK version:        %s\n", ESP.getSdkVersion());
     Serial.printf("CPU frequency:      %d MHz\n", ESP.getCpuFreqMHz());
     Serial.printf("Boot Mode           %u\n", ESP.getBootMode());
