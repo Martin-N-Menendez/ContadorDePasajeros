@@ -20,13 +20,14 @@ ADC_MODE(ADC_VCC);                            // Pin a sensar (Conectar A0 con 3
 #define SERIAL_SET_DEBUG_OUTPUT  false        // Activar modo debug
 const uint16_t MAX_DEVICES = 350;             // Maxima cantidad de dispositivos a almacenar
 const int8_t MIN_RSSI = -99;                  // Minima RSSI que debe tener un dispositivo para ser almacenado
-const uint32_t LIST_TIMEOUT = 150*1000;       // Maxima tolerancia (segundos) antes de eliminar un dispositivo
-const uint16_t REPORTED = 10;                 // Minima cantidad de reportes para ser considerado pasajero
-const uint16_t SENDTIME = 5*60;               // Cantidad de segundos para enviar por MQTT
-//#define JBUFFER (MAX_DEVICES * 40)+15         // Tamaño del buffer para el Json
-#define LINE LINEA2                           // Linea de Trenes Argentinos (ver Trenes)
+const uint32_t LIST_TIMEOUT = 150;             // Maxima tolerancia (segundos) antes de eliminar un dispositivo
+const uint16_t REPORTED = 3;                 // Minima cantidad de reportes para ser considerado pasajero
+const uint16_t SENDTIME = 1*60;               // Cantidad de segundos para enviar por MQTT
+#define CHOP 15                                // Cantidad de elementos en la trama de datos
+#define LINE LINEA1                          // Linea de Trenes Argentinos (ver Trenes)
 #define TRAIN 1                               // Numero de formacion
-#define CAR 5                                 // Numero de coche (1a7 o 1a9 segun linea)
+#define CAR 7                                 // Numero de coche (1a7 o 1a9 segun linea)
+#define TXPOWER -20.5
 uint16_t N_devices;
 uint16_t people;
 /*################## WiFi ################*/
