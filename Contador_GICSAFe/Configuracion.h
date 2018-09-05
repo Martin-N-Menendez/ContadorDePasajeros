@@ -35,7 +35,7 @@ const char *ESP_NAME = "Contador de pasajeros"; // Host name
 const char *AP_SSID = "GICSAFe";                // Nombre del AP
 const char *AP_PASSWORD = "GICSAFeMOS";         // Contraseña del AP
 const ap_t AP_LIST[] = {                        // Lista de conexiones a probar
-        {"Telecentro-cb70", "VWN52Y4ETZ2Q"},    // Martin casa
+        //{"Telecentro-cb70", "VWN52Y4ETZ2Q"},    // Martin casa
         {"PruebaTBA", "pruebaTBA"},             // Martin celular
         {"BCYL-Invitados" , "bcyl2016"},        // Trenes Argentinos
         {"WiFi-Arnet-3b37", "33B3FF74EE"},      // Pablo casa
