@@ -41,7 +41,8 @@ const ap_t AP_LIST[] = {                        // Lista de conexiones a probar
         {"WiFi-Arnet-3b37", "33B3FF74EE"},      // Pablo casa
         {"alutenberg", "contador2018"},         // Ariel celular
         {"pgomez", "contador2018"},             // Pablo celular
-        {"WT19a", "contador2018"}               // Pablo celular 2
+        {"WT19a", "contador2018"},              // Pablo celular 2
+        {"Live", "contador2018"}                // Pablo celular 3
 };
 /*################## MQTT ################*/
 const char* MQTT_HOST = "191.239.243.244";                               // Direccion del broker
