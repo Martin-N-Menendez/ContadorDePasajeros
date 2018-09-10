@@ -50,6 +50,7 @@ void loop() {
   if (millis() - sendEntry > SENDTIME * 1000) {
     sendEntry = millis();
     jSonToMQTT();
+    mqttClient.disconnect();
   }
 }
 
@@ -66,18 +67,21 @@ void jSonToMQTT() {
 
   mqttClient.subscribe(MQTT_OUT_TOPIC);
   // Publish "In" event
-  char msg[75] = "";
-  snprintf(msg, sizeof(msg),
-           "{\"Type\":\"Header\",\"N\":%d,\"P\":%d,\"B\":%.2fV,\"T\":%s,\"heap\":%d}",
-           N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap()
-          );
-  mqttClient.publish(MQTT_OUT_TOPIC, msg);
+  //char msg[75] = "";
+  //snprintf(msg, sizeof(msg),
+  //        "{\"Type\":\"Header\",\"N\":%d,\"P\":%d,\"B\":%.2fV,\"T\":%s,\"heap\":%d}",
+  //       N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap()
+  //      );
+
+  String aux =  "{\"Type\":\"Header\",\"N\":"+String(N_devices)+",\"P\":"+String(people)+",\"B\":"+String((float)ESP.getVcc()/1024.0)+",\"T\":"+date.c_str()+",\"heap\":"+ESP.getFreeHeap()+"}";
+  
+  mqttClient.publish(MQTT_OUT_TOPIC, aux.c_str());
   mqttClient.subscribe(MQTT_OUT_TOPIC);
 
   Serial.println("---------HEADER--------");
   Serial.printf("[Header] Dispositivos: %d, Personas: %d, Batería: %.2fV, Duración: %s, Heap: %d\n", N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap());
   Serial.println("---------HEADER--------");
-  /*
+  
   Serial.println("---------DATA--------");
   j = 0;
   for (i = 0; i < MAX_DEVICES; i++)
@@ -158,7 +162,7 @@ void jSonToMQTT() {
     mqttClient.subscribe(MQTT_OUT_TOPIC);
     Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
   }
-  */
+  
 }
 
 void checkList() {
@@ -351,8 +355,10 @@ void initSerial() {
 }
 
 void wifiConnect() {
-  WiFi.setOutputPower(20.5);
+  //WiFi.setOutputPower(20.5);
+
   while (wifiMulti.run() != WL_CONNECTED) {
+    wifiClient = WiFiClient();
     delay(500);
   }
   Serial.printf("Conectado a %s con IP %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
@@ -399,6 +405,7 @@ void mqttConnect() {
 
   while (!mqttClient.connected()) {
     Serial.println("MQTT > Conectando...");
+    delay(1000);
     if (mqttClient.connect(ESP_NAME)) {
       Serial.printf("Conectado a %s\n", MQTT_HOST);
       mqttClient.subscribe(MQTT_OUT_TOPIC);
