@@ -21,25 +21,47 @@ clt_device_t devicelist[MAX_DEVICES];
 
 uint64_t sendEntry = 0;
 
+void inline handler (void);
+
 void setup() {
   initSerial();
   initWiFi();
   initMQTT();
   mqttClient.setCallback(callback);
   probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequest); // Handler de probe request
+
+  timer0_isr_init();
+  timer0_attachInterrupt(handler);
+  timer0_write(ESP.getCycleCount() + timer0_preload * my_delay);
+  interrupts();
+}
+
+void inline handler (void){
+
+  uint32_t heap = ESP.getFreeHeap();
+  //Serial.printf("<%u>\r\n",ESP.getFreeHeap());
+  if (heap < 4000)
+  {
+    Serial.printf("<%u>\r\n",ESP.getFreeHeap());
+    Serial.println("Cantidad de heap critico! desconectando MQTT");  
+    mqttClient.disconnect();
+    Serial.printf("<%u>\r\n",ESP.getFreeHeap());
+  }
+  
+  timer0_write(ESP.getCycleCount() + timer0_preload * my_delay); 
 }
 
 void loop() {
 
   // Handle wifi connection
-  if (wifiMulti.run() != WL_CONNECTED) {
+  if(wifiMulti.run() != WL_CONNECTED) {
     WiFi.disconnect();
     wifiConnect();
     return;
   }
 
   // Handle MQTT
-  if (!mqttClient.connected()) {
+  if(!mqttClient.connected()) {
     mqttConnect();
   }
   mqttClient.loop();
@@ -50,8 +72,10 @@ void loop() {
   if (millis() - sendEntry > SENDTIME * 1000) {
     sendEntry = millis();
     jSonToMQTT();
-    mqttClient.disconnect();
+    //delay(30*1000);
+    //mqttClient.disconnect();
   }
+
 }
 
 void jSonToMQTT() {
@@ -162,7 +186,7 @@ void jSonToMQTT() {
     mqttClient.subscribe(MQTT_OUT_TOPIC);
     Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
   }
-  
+  delay(200);
 }
 
 void checkList() {
