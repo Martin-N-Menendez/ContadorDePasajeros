@@ -25,5 +25,6 @@ void mqttConnect();
 uint32_t getUptimeSecs();
 String prettyBytes(uint32_t bytes);
 String macToString(const uint8 mac[6]);
+void HeaderToMQTT();
 
 #endif //ESPRESENCE_ESPRESENCE_H

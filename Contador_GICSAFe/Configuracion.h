@@ -22,8 +22,8 @@ const uint16_t MAX_DEVICES = 350;             // Maxima cantidad de dispositivos
 const int8_t MIN_RSSI = -99;                  // Minima RSSI que debe tener un dispositivo para ser almacenado
 const uint32_t LIST_TIMEOUT = 150*1000;       // Maxima tolerancia (segundos) antes de eliminar un dispositivo
 const uint16_t REPORTED = 3;                  // Minima cantidad de reportes para ser considerado pasajero
-const uint16_t SENDTIME = 5*60;               // Cantidad de segundos para enviar por MQTT
-#define CHOP 15                               // Cantidad de elementos en la trama de datos
+const uint16_t SENDTIME = 1*60;               // Cantidad de segundos para enviar por MQTT
+#define CHOP 2                                // Cantidad de elementos en la trama de datos
 #define LINE LINEA1                           // Linea de Trenes Argentinos (ver Trenes)
 #define TRAIN 1                               // Numero de formacion
 #define CAR 7                                 // Numero de coche (1a7 o 1a9 segun linea)
@@ -38,7 +38,7 @@ const char *ESP_NAME = "Contador de pasajeros"; // Host name
 const char *AP_SSID = "GICSAFe";                // Nombre del AP
 const char *AP_PASSWORD = "GICSAFeMOS";         // Contraseña del AP
 const ap_t AP_LIST[] = {                        // Lista de conexiones a probar
-        //{"Telecentro-cb70", "VWN52Y4ETZ2Q"},    // Martin casa
+        {"Telecentro-cb70", "VWN52Y4ETZ2Q"},    // Martin casa
         {"PruebaTBA", "pruebaTBA"},             // Martin celular
         {"BCYL-Invitados" , "bcyl2016"},        // Trenes Argentinos
         {"WiFi-Arnet-3b37", "33B3FF74EE"},      // Pablo casa

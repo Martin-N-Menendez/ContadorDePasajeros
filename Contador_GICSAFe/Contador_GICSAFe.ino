@@ -10,7 +10,7 @@
 #include "Configuracion.h"
 
 ESP8266WiFiMulti wifiMulti;
-WiFiClient wifiClient;
+WiFiClient wifiClient = WiFiClient();;
 PubSubClient mqttClient(wifiClient);
 WiFiEventHandler probeRequestHandler;
 
@@ -20,6 +20,8 @@ clt_device_t devicelist[MAX_DEVICES];
 //StaticJsonBuffer<200> jsonBuffer;
 
 uint64_t sendEntry = 0;
+uint32_t times = 1;
+uint32_t ack = 0;
 
 void inline handler (void);
 
@@ -36,32 +38,32 @@ void setup() {
   interrupts();
 }
 
-void inline handler (void){
+void inline handler (void) {
 
   uint32_t heap = ESP.getFreeHeap();
   //Serial.printf("<%u>\r\n",ESP.getFreeHeap());
-  if (heap < 4000)
+  if (heap < 2500)
   {
-    Serial.printf("<%u>\r\n",ESP.getFreeHeap());
-    Serial.println("Cantidad de heap critico! desconectando MQTT");  
-    mqttClient.disconnect();
-    Serial.printf("<%u>\r\n",ESP.getFreeHeap());
+    Serial.printf("<%u>\r\n", ESP.getFreeHeap());
+    Serial.println("Cantidad de heap critico! desconectando MQTT");
+    //mqttClient.disconnect();
+    //  Serial.printf("<%u>\r\n",ESP.getFreeHeap());
   }
-  
-  timer0_write(ESP.getCycleCount() + timer0_preload * my_delay); 
+
+  timer0_write(ESP.getCycleCount() + timer0_preload * my_delay);
 }
 
 void loop() {
 
   // Handle wifi connection
-  if(wifiMulti.run() != WL_CONNECTED) {
+  if (wifiMulti.run() != WL_CONNECTED) {
     WiFi.disconnect();
     wifiConnect();
     return;
   }
 
   // Handle MQTT
-  if(!mqttClient.connected()) {
+  if (!mqttClient.connected()) {
     mqttConnect();
   }
   mqttClient.loop();
@@ -71,43 +73,50 @@ void loop() {
 
   if (millis() - sendEntry > SENDTIME * 1000) {
     sendEntry = millis();
+    HeaderToMQTT();
     jSonToMQTT();
-    //delay(30*1000);
+    times++;
+    //delay(60*1000);
     //mqttClient.disconnect();
   }
 
 }
 
+void HeaderToMQTT() {
+
+  String date = getTime();
+  String aux =  "{\"Type\":\"Header\",\"i\":" + String(times) + ",\"N\":" + String(N_devices) + ",\"P\":" + String(people) + ",\"B\":" + String((float)ESP.getVcc() / 1024.0) + ",\"T\":\"" + date.c_str() + "\",\"heap\":" + ESP.getFreeHeap() + "}";
+
+  Serial.println("---------HEADER--------");
+  Serial.printf("[Header] Veces: %d, Dispositivos: %d, Personas: %d, Batería: %.2fV, Duración: %s, Heap: %d\n", times, N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap());
+  Serial.println("---------HEADER--------");
+
+  if (!mqttClient.publish(MQTT_OUT_TOPIC, aux.c_str()))
+    Serial.println("Fallo al publicar Header");
+  if (!mqttClient.subscribe(MQTT_OUT_TOPIC))
+    Serial.println("Fallo al subscribirse al headerr");
+
+}
+
 void jSonToMQTT() {
 
-  uint16_t i, j;
-  String date = getTime();
+  uint16_t i, j, packet, sent, sub;
+  uint16_t retry = 0;
+  uint32_t memory = 0;
 
   String JsonBuffer = "";
+  String Place = "";
   String MACBuffer = "\"MAC\":[";
   String RSSIBuffer = "\"RSSI\":[";
   String LHTBuffer = "\"LHT\":[";
   String REPBuffer = "\"REP\":[";
 
-  mqttClient.subscribe(MQTT_OUT_TOPIC);
-  // Publish "In" event
-  //char msg[75] = "";
-  //snprintf(msg, sizeof(msg),
-  //        "{\"Type\":\"Header\",\"N\":%d,\"P\":%d,\"B\":%.2fV,\"T\":%s,\"heap\":%d}",
-  //       N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap()
-  //      );
-
-  String aux =  "{\"Type\":\"Header\",\"N\":"+String(N_devices)+",\"P\":"+String(people)+",\"B\":"+String((float)ESP.getVcc()/1024.0)+",\"T\":"+date.c_str()+",\"heap\":"+ESP.getFreeHeap()+"}";
-  
-  mqttClient.publish(MQTT_OUT_TOPIC, aux.c_str());
-  mqttClient.subscribe(MQTT_OUT_TOPIC);
-
-  Serial.println("---------HEADER--------");
-  Serial.printf("[Header] Dispositivos: %d, Personas: %d, Batería: %.2fV, Duración: %s, Heap: %d\n", N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap());
-  Serial.println("---------HEADER--------");
-  
   Serial.println("---------DATA--------");
+  delay(300);
   j = 0;
+  packet = 0;
+  sent = 0;
+  sub = 0;
   for (i = 0; i < MAX_DEVICES; i++)
   {
     ESP.wdtFeed();
@@ -121,30 +130,59 @@ void jSonToMQTT() {
       RSSIBuffer += devicelist[i].rssi;
       LHTBuffer += ((millis() - devicelist[i].ms) / 1000UL);
       REPBuffer += devicelist[i].reported;
-      
+
       if (!(j % CHOP))
       {
+        packet++;
+        
         MACBuffer += ']';
         RSSIBuffer += ']';
         LHTBuffer += ']';
         REPBuffer += ']';
+    
+        Place = "\"i:\""+String(times) + ',' + "\"P:\""+String(packet);
         
-        Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
-        JsonBuffer = "{\"Type\":\"Data\"," + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
-        Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
-        
-        //Serial.println(MACBuffer);
-        //Serial.println(RSSIBuffer);
-        //Serial.println(LHTBuffer);
-        //Serial.println(REPBuffer);
+        memory = ESP.getFreeHeap() ;
+        JsonBuffer = "{\"Type\":\"Data\"," + Place + ',' + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
+
+        Serial.printf("%d - %d  | %d -%d | ", N_devices, packet, memory, ESP.getFreeHeap());
         Serial.println(JsonBuffer);
+
+        retry = 0;       
+        while (1)
+        {
+          if (mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str()))
+          {
+          Serial.printf("<%d> Publicado \r\n", packet);
+            sent++;
+            break;
+          } else {
+
+            Serial.printf("Fallo al publicar el dato:%d \r\n", j);
+            retry++;
+            if (retry >= 3)
+              break;
+          }
+        }
+
+        retry = 0;
+        while (1)
+        {
+          if (mqttClient.subscribe(MQTT_OUT_TOPIC))
+          {
+            Serial.printf("<%d> ACK recibido \r\n", packet);
+            sub++;
+            break;
+          } else {
+            Serial.printf("Fallo al subscribirse al dato:%d \r\n", j);
+            retry++;
+            if (retry >= 3)
+              break;
+          }
+        }
         
-        mqttClient.subscribe(MQTT_OUT_TOPIC);
-        mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str()); // Publish "Summary"
-        mqttClient.subscribe(MQTT_OUT_TOPIC);
-        
-        delay(200);
-        
+        delay(300);
+
         JsonBuffer = "";
         MACBuffer = "\"MAC\":[";
         RSSIBuffer = "\"RSSI\":[";
@@ -162,30 +200,63 @@ void jSonToMQTT() {
     }
   }
 
-  delay(200);
-  
+  delay(300);
+
   if (N_devices % CHOP)
   {
+    packet++;
+    
     MACBuffer += ']';
     RSSIBuffer += ']';
     LHTBuffer += ']';
-    REPBuffer += ']';  
+    REPBuffer += ']';
 
-    //Serial.println(MACBuffer);
-    //Serial.println(RSSIBuffer);
-    //Serial.println(LHTBuffer);
-    //Serial.println(REPBuffer);
-    Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
-    JsonBuffer = "{\"Type\":\"Data\"," + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
+    Place = "\"i:\""+String(times) + ',' + "\"P:\""+String(packet);
+        
+    memory = ESP.getFreeHeap() ;
+    JsonBuffer = "{\"Type\":\"Data\"," + Place + ',' + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
+
+    Serial.printf("%d - %d  | %d -%d | ", N_devices, packet, memory, ESP.getFreeHeap());
     Serial.println(JsonBuffer);
-    Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
+
     Serial.println("---------DATA--------");
 
-    mqttClient.subscribe(MQTT_OUT_TOPIC);
-    mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str()); // Publish "Summary"
-    mqttClient.subscribe(MQTT_OUT_TOPIC);
-    Serial.printf("%d | %d\r\n", N_devices, ESP.getFreeHeap());
+    retry = 0;
+    while (1)
+    {
+      if (mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str()))
+    {
+      Serial.printf("<%d> Publicado \r\n", packet);
+        retry = 0;
+        sent++;
+        break;
+      } else {
+        Serial.printf("Fallo al publicar el dato:%d \r\n", j);
+        retry++;
+        if (retry >= 3)
+          break;
+      }
+    }
+    
+    retry = 0;
+    while (1)
+    {
+      if (mqttClient.subscribe(MQTT_OUT_TOPIC))
+      {
+        Serial.printf("<%d> ACK recibido \r\n", packet);
+        sub++;
+        break;
+      } else {
+        Serial.printf("Fallo al subscribirse al dato:%d \r\n", j);
+        retry++;
+        if (retry >= 3)
+          break;
+      }
+    }
   }
+
+  Serial.printf("%d ACK de %d paquetes\r\n", sub,packet);
+  ack = sub;
   delay(200);
 }
 
@@ -405,14 +476,18 @@ void initWiFi() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("ACK: [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (unsigned int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
 
+    Serial.print("ACK: [");
+    Serial.print(topic);
+    Serial.print("] ");
+    for (unsigned int i = 0; i < length; i++) {
+     Serial.print((char)payload[i]);
+    }
+    Serial.println();
+    ack--;
+    if(ack+1 == 0)
+      mqttClient.disconnect();
+  
   // Switch on the LED if an 1 was received as first character
   /*
     if ((char)payload[0] == '1') {
@@ -427,14 +502,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void mqttConnect() {
 
+  wifiClient = WiFiClient();
   while (!mqttClient.connected()) {
     Serial.println("MQTT > Conectando...");
     delay(1000);
     if (mqttClient.connect(ESP_NAME)) {
       Serial.printf("Conectado a %s\n", MQTT_HOST);
-      mqttClient.subscribe(MQTT_OUT_TOPIC);
-      mqttClient.publish(MQTT_OUT_TOPIC, "{\"event\":\"connected\"}");
-      mqttClient.subscribe(MQTT_OUT_TOPIC);
+      //mqttClient.publish(MQTT_OUT_TOPIC, "{\"event\":\"connected\"}");
+      //mqttClient.subscribe(MQTT_OUT_TOPIC);
     } else {
       Serial.print("MQTT > Falla!, rc=");
       Serial.print(mqttClient.state());
