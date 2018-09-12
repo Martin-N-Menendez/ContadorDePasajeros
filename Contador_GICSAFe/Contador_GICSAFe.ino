@@ -70,7 +70,8 @@ void loop() {
 
   checkList();    // Handle devices list
   calculatePeople();
-
+  //ReadConfig();
+  
   if (millis() - sendEntry > SENDTIME * 1000) {
     sendEntry = millis();
     HeaderToMQTT();
@@ -80,6 +81,10 @@ void loop() {
     //mqttClient.disconnect();
   }
 
+}
+
+void ReadConfig(){
+  mqttClient.subscribe("/cdp/configout");
 }
 
 void HeaderToMQTT() {
@@ -95,7 +100,9 @@ void HeaderToMQTT() {
     Serial.println("Fallo al publicar Header");
   if (!mqttClient.subscribe(MQTT_OUT_TOPIC))
     Serial.println("Fallo al subscribirse al headerr");
-
+    
+  ack = 1;
+  delay(FREQ);
 }
 
 void jSonToMQTT() {
@@ -112,7 +119,7 @@ void jSonToMQTT() {
   String REPBuffer = "\"REP\":[";
 
   Serial.println("---------DATA--------");
-  delay(300);
+  
   j = 0;
   packet = 0;
   sent = 0;
@@ -140,7 +147,7 @@ void jSonToMQTT() {
         LHTBuffer += ']';
         REPBuffer += ']';
     
-        Place = "\"i:\""+String(times) + ',' + "\"P:\""+String(packet);
+        Place = "\"i:\""+String(times) + ',' + "\"P\":"+String(packet);
         
         memory = ESP.getFreeHeap() ;
         JsonBuffer = "{\"Type\":\"Data\"," + Place + ',' + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
@@ -155,11 +162,12 @@ void jSonToMQTT() {
           {
           Serial.printf("<%d> Publicado \r\n", packet);
             sent++;
+            delay(500);
             break;
           } else {
-
-            Serial.printf("Fallo al publicar el dato:%d \r\n", j);
+            Serial.printf("Fallo al publicar el paquete:%d \r\n", packet);
             retry++;
+            delay(500);
             if (retry >= 3)
               break;
           }
@@ -170,18 +178,19 @@ void jSonToMQTT() {
         {
           if (mqttClient.subscribe(MQTT_OUT_TOPIC))
           {
-            Serial.printf("<%d> ACK recibido \r\n", packet);
+            Serial.printf("<%d> subscripto al paquete \r\n", packet);
             sub++;
             break;
           } else {
-            Serial.printf("Fallo al subscribirse al dato:%d \r\n", j);
+            Serial.printf("Fallo al subscribirse el paquete:%d \r\n", packet);
             retry++;
+            delay(500);
             if (retry >= 3)
               break;
           }
         }
         
-        delay(300);
+        delay(FREQ);
 
         JsonBuffer = "";
         MACBuffer = "\"MAC\":[";
@@ -200,7 +209,7 @@ void jSonToMQTT() {
     }
   }
 
-  delay(300);
+  delay(FREQ);
 
   if (N_devices % CHOP)
   {
@@ -211,7 +220,7 @@ void jSonToMQTT() {
     LHTBuffer += ']';
     REPBuffer += ']';
 
-    Place = "\"i:\""+String(times) + ',' + "\"P:\""+String(packet);
+    Place = "\"i\":"+String(times) + ',' + "\"P\":"+String(packet);
         
     memory = ESP.getFreeHeap() ;
     JsonBuffer = "{\"Type\":\"Data\"," + Place + ',' + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
@@ -231,8 +240,9 @@ void jSonToMQTT() {
         sent++;
         break;
       } else {
-        Serial.printf("Fallo al publicar el dato:%d \r\n", j);
+        Serial.printf("Fallo al publicar el paquete:%d \r\n", packet);
         retry++;
+        delay(500);
         if (retry >= 3)
           break;
       }
@@ -240,24 +250,25 @@ void jSonToMQTT() {
     
     retry = 0;
     while (1)
-    {
-      if (mqttClient.subscribe(MQTT_OUT_TOPIC))
-      {
-        Serial.printf("<%d> ACK recibido \r\n", packet);
-        sub++;
-        break;
-      } else {
-        Serial.printf("Fallo al subscribirse al dato:%d \r\n", j);
-        retry++;
-        if (retry >= 3)
-          break;
-      }
-    }
+        {
+          if (mqttClient.subscribe(MQTT_OUT_TOPIC))
+          {
+            Serial.printf("<%d> subscripto al paquete \r\n", packet);
+            sub++;
+            break;
+          } else {
+            Serial.printf("Fallo al subscribirse el paquete:%d \r\n", packet);
+            retry++;
+            delay(500);
+            if (retry >= 3)
+              break;
+          }
+        }
   }
 
   Serial.printf("%d ACK de %d paquetes\r\n", sub,packet);
-  ack = sub;
-  delay(200);
+  ack += sub;
+  delay(FREQ);
 }
 
 void checkList() {
@@ -484,9 +495,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
      Serial.print((char)payload[i]);
     }
     Serial.println();
-    ack--;
-    if(ack+1 == 0)
-      mqttClient.disconnect();
+
+    if(strcmp(topic,"/cdp/configout"))
+    {
+        ack--;
+        if(ack+1 == 0)
+          mqttClient.disconnect();
+    }
+    
   
   // Switch on the LED if an 1 was received as first character
   /*
