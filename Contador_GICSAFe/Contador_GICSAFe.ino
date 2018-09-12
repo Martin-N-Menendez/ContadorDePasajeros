@@ -96,13 +96,16 @@ void HeaderToMQTT() {
   Serial.printf("[Header] Veces: %d, Dispositivos: %d, Personas: %d, Batería: %.2fV, Duración: %s, Heap: %d\n", times, N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap());
   Serial.println("---------HEADER--------");
 
+  while(!mqttClient.connected()) {
+    mqttConnect();
+  } 
   if (!mqttClient.publish(MQTT_OUT_TOPIC, aux.c_str()))
     Serial.println("Fallo al publicar Header");
   if (!mqttClient.subscribe(MQTT_OUT_TOPIC))
     Serial.println("Fallo al subscribirse al headerr");
     
   ack = 1;
-  delay(FREQ);
+  //delay(FREQ);
 }
 
 void jSonToMQTT() {
@@ -156,7 +159,7 @@ void jSonToMQTT() {
         Serial.println(JsonBuffer);
 
         retry = 0;       
-        while (1)
+        /*while (1)
         {
           if (mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str()))
           {
@@ -171,7 +174,7 @@ void jSonToMQTT() {
             if (retry >= 3)
               break;
           }
-        }
+        }        
 
         retry = 0;
         while (1)
@@ -188,9 +191,16 @@ void jSonToMQTT() {
             if (retry >= 3)
               break;
           }
-        }
+        }*/
+
+        while(!mqttClient.connected()) {
+          mqttConnect();
+        } 
+        mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str());
+        mqttClient.subscribe(MQTT_OUT_TOPIC);
+        sub++;
         
-        delay(FREQ);
+        //delay(FREQ);
 
         JsonBuffer = "";
         MACBuffer = "\"MAC\":[";
@@ -209,7 +219,7 @@ void jSonToMQTT() {
     }
   }
 
-  delay(FREQ);
+  //delay(FREQ);
 
   if (N_devices % CHOP)
   {
@@ -230,7 +240,7 @@ void jSonToMQTT() {
 
     Serial.println("---------DATA--------");
 
-    retry = 0;
+    /*retry = 0;
     while (1)
     {
       if (mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str()))
@@ -263,12 +273,19 @@ void jSonToMQTT() {
             if (retry >= 3)
               break;
           }
-        }
+        }*/
+
+        while(!mqttClient.connected()) {
+          mqttConnect();
+        } 
+        mqttClient.publish(MQTT_OUT_TOPIC, JsonBuffer.c_str());
+        mqttClient.subscribe(MQTT_OUT_TOPIC);
+        sub++;
   }
 
   Serial.printf("%d ACK de %d paquetes\r\n", sub,packet);
   ack += sub;
-  delay(FREQ);
+  //delay(FREQ);
 }
 
 void checkList() {
@@ -499,7 +516,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if(strcmp(topic,"/cdp/configout"))
     {
         ack--;
-        if(ack+1 == 0)
+        if(ack == 0)
           mqttClient.disconnect();
     }
     
