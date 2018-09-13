@@ -24,7 +24,7 @@ const uint32_t LIST_TIMEOUT = 150*1000;       // Maxima tolerancia (segundos) an
 const uint16_t REPORTED = 3;                  // Minima cantidad de reportes para ser considerado pasajero
 const uint16_t SENDTIME = 1*60;               // Cantidad de segundos para enviar por MQTT
 #define FREQ 1*1000                           
-#define CHOP 1                               // Cantidad de elementos en la trama de datos
+#define CHOP 3                                // Cantidad de elementos en la trama de datos
 #define LINE LINEA1                           // Linea de Trenes Argentinos (ver Trenes)
 #define TRAIN 1                               // Numero de formacion
 #define CAR 7                                 // Numero de coche (1a7 o 1a9 segun linea)
@@ -53,8 +53,8 @@ const char* MQTT_HOST = "191.239.243.244";                               // Dire
 //const char* MQTT_HOST = "linsse.com.ar";                             
 #define MQTT_PORT  1883                                                  // Puerto del broker   
 String Address = "/cdp/"+String(lines[LINE])+"/F_"+TRAIN+"/C_"+CAR+"/";
-const char* MQTT_OUT_TOPIC = Address.c_str();                            // Topico del broker                 
-//const char* MQTT_OUT_TOPIC = "cdp/test";                               // Topico del broker
+//const char* MQTT_OUT_TOPIC = Address.c_str();                            // Topico del broker                 
+String MQTT_OUT_TOPIC = Address;                               // Topico del broker
 /*################## Timer ################*/
 #define day  86400000 // 86400000 milisegundos por dia 
 #define hour  3600000 // 3600000 milisegundos en una hora

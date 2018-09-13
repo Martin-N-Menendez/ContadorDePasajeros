@@ -27,4 +27,10 @@ String prettyBytes(uint32_t bytes);
 String macToString(const uint8 mac[6]);
 void HeaderToMQTT();
 
+void myDataCb(String& topic, String& data);
+void myPublishedCb();
+void myDisconnectedCb();
+void myConnectedCb();
+
+
 #endif //ESPRESENCE_ESPRESENCE_H
