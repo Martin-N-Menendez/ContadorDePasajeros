@@ -13,7 +13,7 @@
 ESP8266WiFiMulti wifiMulti;
 WiFiClient wifiClient;
 //PubSubClient mqttClient(wifiClient);
-MQTT myMqtt("GICSAFe", "191.239.243.244", 1883);
+MQTT myMqtt("GICSAFe7", "191.239.243.244", 1883);
 
 WiFiEventHandler probeRequestHandler;
 
@@ -33,13 +33,15 @@ void setup() {
   initWiFi();
   initMQTT();
   //mqttClient.setCallback(callback);
-  probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequest); // Handler de probe request
+  
+  //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequest); // Handler de probe request
 
   //timer0_isr_init();
   //timer0_attachInterrupt(handler);
   //timer0_write(ESP.getCycleCount() + timer0_preload * my_delay);
   //interrupts();
   delay(10);
+  SuperFakeSniffer();
 }
 
 void inline handler (void) {
@@ -96,6 +98,16 @@ void loop() {
  
 }
 
+void SuperFakeSniffer()
+{
+   for (int i = 0; i < MAX_DEVICES; i++) { 
+      devicelist[i].mac = "AA:BB:CC:DD:EE:FF";
+      devicelist[i].rssi = -15;
+      devicelist[i].ms = 11111;
+      devicelist[i].reported = 65535;
+    }
+}
+
 void ReadConfig(){
   //mqttClient.subscribe("/cdp/configout");
 }
@@ -115,7 +127,6 @@ void HeaderToMQTT() {
 
   ack = 1;
 }
-
 
 void jSonToMQTT() {
 
@@ -218,7 +229,6 @@ void jSonToMQTT() {
   Serial.printf("%d ACK de %d paquetes\r\n", sub,packet);
   ack += sub;
 }
-
 
 void checkList() {
 
@@ -492,29 +502,24 @@ void initMQTT() {
   mqttConnect();
 }
 
-
-void myConnectedCb()
-{
+void myConnectedCb(){
   Serial.println("MQTT > Conectado");
   String aux = "Conectado";
   boolean result = myMqtt.publish(MQTT_OUT_TOPIC, aux);
   myMqtt.subscribe(MQTT_OUT_TOPIC);
 }
 
-void myDisconnectedCb()
-{
+void myDisconnectedCb(){
   Serial.println("MQTT > Desconectado, reintentando conectar");
   delay(500);
   myMqtt.connect();
 }
 
-void myPublishedCb()
-{
+void myPublishedCb(){
   Serial.println("Publicado");
 }
 
-void myDataCb(String& topic, String& data)
-{
+void myDataCb(String& topic, String& data){
   Serial.print("ACK: [");
   Serial.print(topic);
   Serial.print("] ");
