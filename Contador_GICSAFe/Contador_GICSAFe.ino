@@ -13,7 +13,7 @@
 ESP8266WiFiMulti wifiMulti;
 WiFiClient wifiClient;
 //PubSubClient mqttClient(wifiClient);
-MQTT myMqtt("GICSAFe7", "191.239.243.244", 1883);
+MQTT myMqtt(ESP_NAME, MQTT_HOST, MQTT_PORT);
 
 WiFiEventHandler probeRequestHandler;
 
@@ -68,14 +68,12 @@ void loop() {
     return;
   }
 
-  //int value = ESP.getFreeHeap();
-
-  //String topic = "/cdp/heap/";
-  //String valueStr(value);
-
-
-  //boolean result = myMqtt.publish(topic, valueStr);
-  //Serial.println(valueStr);    
+  if(!myMqtt.isConnected())
+  {
+    myMqtt.connect();
+    delay(500);
+    return;  
+  }
   
   // Handle MQTT
   /*if (!mqttClient.connected()) {
@@ -92,10 +90,7 @@ void loop() {
     HeaderToMQTT();
     jSonToMQTT();
     times++;
-    //delay(60*1000);
-    //mqttClient.disconnect();
   }
- 
 }
 
 void SuperFakeSniffer()
@@ -519,7 +514,8 @@ void myPublishedCb(){
   Serial.println("Publicado");
 }
 
-void myDataCb(String& topic, String& data){
+void myDataCb(String& topic, String& data)
+{
   Serial.print("ACK: [");
   Serial.print(topic);
   Serial.print("] ");
