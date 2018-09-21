@@ -19,24 +19,29 @@ const char* lines[]={L0,L1,L2,L3,L4,L5};
 ADC_MODE(ADC_VCC);                            // Pin a sensar (Conectar A0 con 3V para medir 3.3V)
 #define SERIAL_SET_DEBUG_OUTPUT  false        // Activar modo debug
 const uint16_t MAX_DEVICES = 250;             // Maxima cantidad de dispositivos a almacenar
-const int8_t MIN_RSSI = -99;                  // Minima RSSI que debe tener un dispositivo para ser almacenado
-const uint32_t LIST_TIMEOUT = 150*1000;       // Maxima tolerancia (segundos) antes de eliminar un dispositivo
-const uint16_t REPORTED = 3;                  // Minima cantidad de reportes para ser considerado pasajero
-const uint16_t SENDTIME = 1*60;               // Cantidad de segundos para enviar por MQTT
+//const int8_t MIN_RSSI = -99;                  // Minima RSSI que debe tener un dispositivo para ser almacenado
+//const uint32_t LIST_TIMEOUT = 150;       // Maxima tolerancia (segundos) antes de eliminar un dispositivo
+//const uint16_t REPORTED = 3;                  // Minima cantidad de reportes para ser considerado pasajero
+//const uint16_t SENDTIME = 1*60;               // Cantidad de segundos para enviar por MQTT
 #define FREQ 1*1000                           
-#define CHOP 25                                // Cantidad de elementos en la trama de datos
+//#define CHOP 25                                // Cantidad de elementos en la trama de datos
 #define LINE LINEA1                           // Linea de Trenes Argentinos (ver Trenes)
 #define TRAIN 1                               // Numero de formacion
-#define CAR 7                                 // Numero de coche (1a7 o 1a9 segun linea)
+#define CAR 5                                 // Numero de coche (1a7 o 1a9 segun linea)
 #define TXPOWER -20.5
 uint16_t N_devices;
 uint16_t people;
+uint16_t list_timeout_var = 150;
+uint16_t reported_var = 3;
+uint16_t sendtime_var = 1*60;
+uint8_t chop_var = 25;
+int8_t min_rssi_var = -99;
 /* ####################### Interrupciones ######################## */
 #define timer0_preload 40161290/500
 #define my_delay 100
 /*################## WiFi ################*/
-const char *ESP_NAME = "GICSAFe7"; // Host name
-const char *AP_SSID = "GICSAFe7";                // Nombre del AP
+const char *ESP_NAME = "GICSAFe5"; // Host name
+const char *AP_SSID = "GICSAFe5";                // Nombre del AP
 const char *AP_PASSWORD = "GICSAFeMOS";         // Contraseña del AP
 const ap_t AP_LIST[] = {                        // Lista de conexiones a probar
         //{"Telecentro-cb70", "VWN52Y4ETZ2Q"},    // Martin casa
@@ -46,7 +51,8 @@ const ap_t AP_LIST[] = {                        // Lista de conexiones a probar
         {"alutenberg", "contador2018"},         // Ariel celular
         {"pgomez", "contador2018"},             // Pablo celular
         {"WT19a", "contador2018"},              // Pablo celular 2
-        {"Live", "contador2018"}                // Pablo celular 3
+        {"Live", "contador2018"},                // Pablo celular 3
+        {"Note8", "contador2018"}                // Pablo celular 3
 };
 /*################## MQTT ################*/
 const char* MQTT_HOST = "191.239.243.244";                               // Direccion del broker
@@ -55,6 +61,11 @@ const char* MQTT_HOST = "191.239.243.244";                               // Dire
 String Address = "/cdp/"+String(lines[LINE])+"/F_"+TRAIN+"/C_"+CAR+"/";
 //const char* MQTT_OUT_TOPIC = Address.c_str();                            // Topico del broker                 
 String MQTT_OUT_TOPIC = Address;                               // Topico del broker
+String MQTT_CONFIG_TOPIC1 = "/cdp/configout/timeout/";
+String MQTT_CONFIG_TOPIC2 = "/cdp/configout/reported/";
+String MQTT_CONFIG_TOPIC3 = "/cdp/configout/sendtime/";
+String MQTT_CONFIG_TOPIC4 = "/cdp/configout/chop";
+String MQTT_CONFIG_TOPIC5 = "/cdp/configout/rssi";
 /*################## Timer ################*/
 #define day  86400000 // 86400000 milisegundos por dia 
 #define hour  3600000 // 3600000 milisegundos en una hora

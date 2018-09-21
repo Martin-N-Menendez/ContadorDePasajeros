@@ -34,14 +34,14 @@ void setup() {
   initMQTT();
   //mqttClient.setCallback(callback);
   
-  //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequest); // Handler de probe request
+  probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequest); // Handler de probe request
 
   //timer0_isr_init();
   //timer0_attachInterrupt(handler);
   //timer0_write(ESP.getCycleCount() + timer0_preload * my_delay);
   //interrupts();
   delay(10);
-  SuperFakeSniffer();
+  //SuperFakeSniffer();
 }
 
 void inline handler (void) {
@@ -85,7 +85,7 @@ void loop() {
   calculatePeople();
   //ReadConfig();
   
-  if (millis() - sendEntry > SENDTIME * 1000) {
+  if (millis() - sendEntry > sendtime_var * 1000) {
     sendEntry = millis();
     HeaderToMQTT();
     jSonToMQTT();
@@ -114,6 +114,11 @@ void HeaderToMQTT() {
 
   myMqtt.publish(MQTT_OUT_TOPIC, aux);
   myMqtt.subscribe(MQTT_OUT_TOPIC);
+  myMqtt.subscribe(MQTT_CONFIG_TOPIC1);
+  myMqtt.subscribe(MQTT_CONFIG_TOPIC2);
+  myMqtt.subscribe(MQTT_CONFIG_TOPIC3);
+  myMqtt.subscribe(MQTT_CONFIG_TOPIC4);
+  myMqtt.subscribe(MQTT_CONFIG_TOPIC5);
   //delay(FREQ);
   
   Serial.println("---------HEADER--------");
@@ -156,7 +161,7 @@ void jSonToMQTT() {
       LHTBuffer += ((millis() - devicelist[i].ms) / 1000UL);
       REPBuffer += devicelist[i].reported;
 
-      if (!(j % CHOP))
+      if (!(j % chop_var))
       {
         packet++;
         
@@ -196,7 +201,7 @@ void jSonToMQTT() {
     }
   }
 
-  if (N_devices % CHOP)
+  if (N_devices % chop_var)
   {
     packet++;
     
@@ -229,7 +234,7 @@ void checkList() {
 
   uint16_t i;
   for (i = 0; i < MAX_DEVICES; i++) {
-    if (devicelist[i].mac != "" && (millis() - devicelist[i].ms > LIST_TIMEOUT * 1000)) {
+    if (devicelist[i].mac != "" && (millis() - devicelist[i].ms > list_timeout_var * 1000)) {
       /* mqttClient.subscribe(MQTT_OUT_TOPIC);
         // Publish "Out" event
         char msg[110] = "";
@@ -289,7 +294,7 @@ void calculatePeople() {
   for (i = 0; i < MAX_DEVICES; i++) {
     if ((devicelist[i].mac != "") && (devicelist[i].rssi != 0)) {
       N_devices++;
-      if (devicelist[i].reported > REPORTED)
+      if (devicelist[i].reported > reported_var)
         people++;
     }
   }
@@ -325,9 +330,9 @@ void onProbeRequest(const WiFiEventSoftAPModeProbeRequestReceived &evt) {
 
   String mac = macToString(evt.mac);
 
-  if (evt.rssi <= MIN_RSSI) // Filtro de potencia
+  if (evt.rssi <= min_rssi_var) // Filtro de potencia
   {
-    Serial.printf("%d,%d\r\n", evt.rssi, MIN_RSSI);
+    Serial.printf("%d,%d\r\n", evt.rssi, min_rssi_var);
     return;
   }
 
@@ -402,11 +407,11 @@ void initSerial() {
   Serial.printf("Boot Version:       %u\n", ESP.getBootVersion());
   Serial.println("******** Configuration *********");
   Serial.printf("Max devices:        %d\n", MAX_DEVICES);
-  Serial.printf("Packet size:        %d\n", CHOP);
-  Serial.printf("Min RSSI:           %d\n", MIN_RSSI);
-  Serial.printf("Max time:           %d segundos\n", LIST_TIMEOUT);
-  Serial.printf("Min seen:           %d veces\n", REPORTED);
-  Serial.printf("Send each:          %d segundos\n", SENDTIME);
+  Serial.printf("Packet size:        %d\n", chop_var);
+  Serial.printf("Min RSSI:           %d\n", min_rssi_var);
+  Serial.printf("Max time:           %d segundos\n", list_timeout_var);
+  Serial.printf("Min seen:           %d veces\n", reported_var);
+  Serial.printf("Send each:          %d segundos\n", sendtime_var);
   Serial.println("************ Train  ************");
   Serial.printf("Line:               %s\n", String(lines[LINE]).c_str());
   Serial.printf("Formation:          %d\n", TRAIN);
@@ -516,11 +521,40 @@ void myPublishedCb(){
 
 void myDataCb(String& topic, String& data)
 {
-  Serial.print("ACK: [");
-  Serial.print(topic);
-  Serial.print("] ");
-  //Serial.print(" : ");
-  Serial.println(data);
+
+
+  if(strcmp(topic.c_str(),"/cdp/configout/sendtime/")==0)
+  {
+    Serial.print(topic);
+    Serial.print(" ");
+    Serial.println(data);
+    sendtime_var=data.toInt();
+    Serial.printf("Send each:          %d segundos\n", sendtime_var);
+  }
+  
+  if(strcmp(topic.c_str(),"/cdp/configout/reported/")==0)
+  {
+    Serial.print(topic);
+    Serial.print(" ");
+    Serial.println(data);
+    reported_var=data.toInt();
+    Serial.printf("Min seen:           %d veces\n", reported_var);
+  }
+  
+  if(strcmp(topic.c_str(),"/cdp/configout/timeout/")==0)
+  {
+    Serial.print(topic);
+    Serial.print(" ");
+    Serial.println(data);
+    list_timeout_var=data.toInt();
+    Serial.printf("Max time:           %d segundos\n", list_timeout_var);
+  } else {
+    Serial.print("ACK: [");
+    Serial.print(topic);
+    Serial.print("] ");
+    //Serial.print(" : ");
+    Serial.println(data);
+  }
 }
 
 uint32_t getUptimeSecs() {
