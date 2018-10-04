@@ -1,9 +1,9 @@
 #include <Arduino.h>
-//#include <ArduinoJson.h>
+#include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
-#include <ESP8266mDNS.h>
+//#include <WiFiMulti.h>
+//#include <ESP8266mDNS.h>
 //#include <ArduinoOTA.h>
-//#include <PubSubClient.h>
 #include <MQTT.h>
 #include <set>
 
@@ -11,6 +11,8 @@
 #include "Configuracion.h"
 
 ESP8266WiFiMulti wifiMulti;
+//WiFiMulti wifiMulti;
+
 WiFiClient wifiClient;
 //PubSubClient mqttClient(wifiClient);
 MQTT myMqtt(ESP_NAME, MQTT_HOST, MQTT_PORT);
@@ -67,7 +69,7 @@ void loop() {
     wifiConnect();
     return;
   }
-
+    
   if(!myMqtt.isConnected())
   {
     myMqtt.connect();
@@ -88,17 +90,16 @@ void loop() {
   if (millis() - sendEntry > sendtime_var * 1000) {
     sendEntry = millis();
     HeaderToMQTT();
-    jSonToMQTT();
+    //jSonToMQTT();
     times++;
   }
 }
 
-void SuperFakeSniffer()
-{
+void SuperFakeSniffer(){
    for (int i = 0; i < MAX_DEVICES; i++) { 
       devicelist[i].mac = "AA:BB:CC:DD:EE:FF";
       devicelist[i].rssi = -15;
-      devicelist[i].ms = 11111;
+      devicelist[i].ms = 111;
       devicelist[i].reported = 65535;
     }
 }
@@ -432,7 +433,12 @@ void wifiConnect() {
 void initWiFi() {
   WiFi.hostname(ESP_NAME);
   WiFi.mode(WIFI_AP_STA);
+  
   WiFi.setOutputPower(20.5);
+  //WiFi.setPhyMode(WIFI_PHY_MODE_11B);
+  //WiFi.setPhyMode(WIFI_PHY_MODE_11B);
+  //WiFi.setMaxtxPower(82);
+  
   // Connect station
   Serial.println("Conectando a WiFi...");
   uint8_t i, s = sizeof(AP_LIST) / sizeof AP_LIST[0];
@@ -444,25 +450,6 @@ void initWiFi() {
   // Start AP
   WiFi.softAP(AP_SSID, AP_PASSWORD);
 }
-
-/*
-void callback(char* topic, byte* payload, unsigned int length) {
-
-    Serial.print("ACK: [");
-    Serial.print(topic);
-    Serial.print("] ");
-    for (unsigned int i = 0; i < length; i++) {
-     Serial.print((char)payload[i]);
-    }
-    Serial.println();
-
-    if(strcmp(topic,"/cdp/configout"))
-    {
-        ack--;
-        if(ack == 0)
-          mqttClient.disconnect();
-    }
-}*/
 
 void mqttConnect() {
 
@@ -519,9 +506,7 @@ void myPublishedCb(){
   Serial.println("Publicado");
 }
 
-void myDataCb(String& topic, String& data)
-{
-
+void myDataCb(String& topic, String& data){
 
   if(strcmp(topic.c_str(),"/cdp/configout/sendtime/")==0)
   {
@@ -539,6 +524,15 @@ void myDataCb(String& topic, String& data)
     Serial.println(data);
     reported_var=data.toInt();
     Serial.printf("Min seen:           %d veces\n", reported_var);
+  }
+  
+  if(strcmp(topic.c_str(),"/cdp/configout/rssi/")==0)
+  {
+    Serial.print(topic);
+    Serial.print(" ");
+    Serial.println(data);
+    min_rssi_var=data.toInt();
+    Serial.printf("Min RSSI:           %d\n", min_rssi_var);
   }
   
   if(strcmp(topic.c_str(),"/cdp/configout/timeout/")==0)
