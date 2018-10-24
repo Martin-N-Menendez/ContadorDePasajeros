@@ -43,7 +43,7 @@ void setup() {
   //timer0_write(ESP.getCycleCount() + timer0_preload * my_delay);
   //interrupts();
   delay(10);
-  //SuperFakeSniffer();
+  SuperFakeSniffer();
 }
 
 void inline handler (void) {
