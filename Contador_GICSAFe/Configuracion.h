@@ -18,7 +18,7 @@ static const char* lines[]={L0,L1,L2,L3,L4,L5};
 /*################## Configuracion ################*/
 ADC_MODE(ADC_VCC);                            // Pin a sensar (Conectar A0 con 3V para medir 3.3V)
 #define SERIAL_SET_DEBUG_OUTPUT  false        // Activar modo debug
-static const uint16_t MAX_DEVICES = 400;             // Maxima cantidad de dispositivos a almacenar
+static const uint16_t MAX_DEVICES = 250;             // Maxima cantidad de dispositivos a almacenar
 //const int8_t MIN_RSSI = -99;                  // Minima RSSI que debe tener un dispositivo para ser almacenado
 //const uint32_t LIST_TIMEOUT = 150;       // Maxima tolerancia (segundos) antes de eliminar un dispositivo
 //const uint16_t REPORTED = 3;                  // Minima cantidad de reportes para ser considerado pasajero

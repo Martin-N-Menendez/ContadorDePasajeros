@@ -35,7 +35,7 @@ void setup() {
   initWiFi();
   initMQTT();
   //mqttClient.setCallback(callback);
-  
+
   probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequest); // Handler de probe request
 
   //timer0_isr_init();
@@ -43,7 +43,7 @@ void setup() {
   //timer0_write(ESP.getCycleCount() + timer0_preload * my_delay);
   //interrupts();
   delay(10);
-  SuperFakeSniffer();
+  //SuperFakeSniffer();
 }
 
 void inline handler (void) {
@@ -69,42 +69,42 @@ void loop() {
     wifiConnect();
     return;
   }
-    
-  if(!myMqtt.isConnected())
+
+  if (!myMqtt.isConnected())
   {
     myMqtt.connect();
     delay(500);
-    return;  
+    return;
   }
-  
+
   // Handle MQTT
   /*if (!mqttClient.connected()) {
     mqttConnect();
-  }
-  mqttClient.loop();*/
-    
+    }
+    mqttClient.loop();*/
+
   checkList();    // Handle devices list
   calculatePeople();
   //ReadConfig();
-  
+
   if (millis() - sendEntry > sendtime_var * 1000) {
     sendEntry = millis();
     HeaderToMQTT();
-    //jSonToMQTT();
+    jSonToMQTT();
     times++;
   }
 }
 
-void SuperFakeSniffer(){
-   for (int i = 0; i < MAX_DEVICES; i++) { 
-      devicelist[i].mac = "AA:BB:CC:DD:EE:FF";
-      devicelist[i].rssi = -15;
-      devicelist[i].ms = 111;
-      devicelist[i].reported = 65535;
-    }
+void SuperFakeSniffer() {
+  for (int i = 0; i < MAX_DEVICES; i++) {
+    devicelist[i].mac = "AA:BB:CC:DD:EE:FF";
+    devicelist[i].rssi = -15;
+    devicelist[i].ms = 111;
+    devicelist[i].reported = 65535;
+  }
 }
 
-void ReadConfig(){
+void ReadConfig() {
   //mqttClient.subscribe("/cdp/configout");
 }
 
@@ -121,7 +121,7 @@ void HeaderToMQTT() {
   myMqtt.subscribe(MQTT_CONFIG_TOPIC4);
   myMqtt.subscribe(MQTT_CONFIG_TOPIC5);
   //delay(FREQ);
-  
+
   Serial.println("---------HEADER--------");
   Serial.printf("[Header] Veces: %d, Dispositivos: %d, Personas: %d, Batería: %.2fV, Duración: %s, Heap: %d\n", times, N_devices, people, (float)ESP.getVcc() / 1024.0, date.c_str(), ESP.getFreeHeap());
   Serial.println("---------HEADER--------");
@@ -143,7 +143,7 @@ void jSonToMQTT() {
   String REPBuffer = "\"REP\":[";
 
   Serial.println("---------DATA--------");
-  
+
   j = 0;
   packet = 0;
   sent = 0;
@@ -165,19 +165,19 @@ void jSonToMQTT() {
       if (!(j % chop_var))
       {
         packet++;
-        
+
         MACBuffer += ']';
         RSSIBuffer += ']';
         LHTBuffer += ']';
         REPBuffer += ']';
-    
-        Place = "\"i:\""+String(times) + ',' + "\"P\":"+String(packet);
-        
+
+        Place = "\"i\":" + String(times) + ',' + "\"P\":" + String(packet);
+
         memory = ESP.getFreeHeap() ;
         JsonBuffer = "{\"Type\":\"Data\"," + Place + ',' + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
 
         Serial.printf("%d - %d  | %d -%d | ", N_devices, packet, memory, ESP.getFreeHeap());
-        Serial.println(JsonBuffer);     
+        Serial.println(JsonBuffer);
 
         myMqtt.publish(MQTT_OUT_TOPIC, JsonBuffer);
         myMqtt.subscribe(MQTT_OUT_TOPIC);
@@ -205,14 +205,14 @@ void jSonToMQTT() {
   if (N_devices % chop_var)
   {
     packet++;
-    
+
     MACBuffer += ']';
     RSSIBuffer += ']';
     LHTBuffer += ']';
     REPBuffer += ']';
 
-    Place = "\"i\":"+String(times) + ',' + "\"P\":"+String(packet);
-        
+    Place = "\"i\":" + String(times) + ',' + "\"P\":" + String(packet);
+
     memory = ESP.getFreeHeap() ;
     JsonBuffer = "{\"Type\":\"Data\"," + Place + ',' + MACBuffer + ',' + RSSIBuffer + ',' + LHTBuffer + ',' + REPBuffer + '}';
 
@@ -227,7 +227,7 @@ void jSonToMQTT() {
     //delay(FREQ);
   }
 
-  Serial.printf("%d ACK de %d paquetes\r\n", sub,packet);
+  Serial.printf("%d ACK de %d paquetes\r\n", sub, packet);
   ack += sub;
 }
 
@@ -350,6 +350,25 @@ void onProbeRequest(const WiFiEventSoftAPModeProbeRequestReceived &evt) {
     Serial.println("Random mac!");
     return;
   }
+
+  if (!strncmp(mac.c_str(), "4c:66:41:84:25:52", 17)) // Martin_Finder
+  {
+    String martin = "Hola Martin!";
+    Serial.println(martin);
+    myMqtt.subscribe(MQTT_OUT_TOPIC);
+    myMqtt.publish(MQTT_OUT_TOPIC, martin);
+    myMqtt.subscribe(MQTT_OUT_TOPIC);
+  }
+
+  if (!strncmp(mac.c_str(), "24:18:1d:c7:3a:d5", 17)) // Pablo_Finder
+  {
+    String pablo = "Hola Pablo!";
+    Serial.println(pablo);
+    myMqtt.subscribe(MQTT_OUT_TOPIC);
+    myMqtt.publish(MQTT_OUT_TOPIC, pablo);
+    myMqtt.subscribe(MQTT_OUT_TOPIC);
+  }
+
   uint16_t i;
   for (i = 0; i < MAX_DEVICES; i++) {   // Actualizando MACs ya ingresadas
     if (devicelist[i].mac == mac) {
@@ -433,12 +452,12 @@ void wifiConnect() {
 void initWiFi() {
   WiFi.hostname(ESP_NAME);
   WiFi.mode(WIFI_AP_STA);
-  
+
   WiFi.setOutputPower(20.5);
   //WiFi.setPhyMode(WIFI_PHY_MODE_11B);
   //WiFi.setPhyMode(WIFI_PHY_MODE_11B);
   //WiFi.setMaxtxPower(82);
-  
+
   // Connect station
   Serial.println("Conectando a WiFi...");
   uint8_t i, s = sizeof(AP_LIST) / sizeof AP_LIST[0];
@@ -459,8 +478,8 @@ void mqttConnect() {
   myMqtt.subscribe(MQTT_OUT_TOPIC);
   delay(10);
   /*
-  wifiClient = WiFiClient();
-  while (!mqttClient.connected()) {
+    wifiClient = WiFiClient();
+    while (!mqttClient.connected()) {
     Serial.println("MQTT > Conectando...");
     delay(1000);
     if (mqttClient.connect(ESP_NAME)) {
@@ -473,7 +492,7 @@ void mqttConnect() {
       Serial.println(" Reintentando en 5 segundos");
       delay(5000);
     }
-  }
+    }
   */
 }
 
@@ -485,62 +504,62 @@ void initMQTT() {
   myMqtt.onDisconnected(myDisconnectedCb);
   myMqtt.onPublished(myPublishedCb);
   myMqtt.onData(myDataCb);
-  
+
   mqttConnect();
 }
 
-void myConnectedCb(){
+void myConnectedCb() {
   Serial.println("MQTT > Conectado");
   String aux = "Conectado";
   boolean result = myMqtt.publish(MQTT_OUT_TOPIC, aux);
   myMqtt.subscribe(MQTT_OUT_TOPIC);
 }
 
-void myDisconnectedCb(){
+void myDisconnectedCb() {
   Serial.println("MQTT > Desconectado, reintentando conectar");
   delay(500);
   myMqtt.connect();
 }
 
-void myPublishedCb(){
+void myPublishedCb() {
   Serial.println("Publicado");
 }
 
-void myDataCb(String& topic, String& data){
+void myDataCb(String& topic, String& data) {
 
-  if(strcmp(topic.c_str(),"/cdp/configout/sendtime/")==0)
+  if (strcmp(topic.c_str(), "/cdp/configout/sendtime/") == 0)
   {
     Serial.print(topic);
     Serial.print(" ");
     Serial.println(data);
-    sendtime_var=data.toInt();
+    sendtime_var = data.toInt();
     Serial.printf("Send each:          %d segundos\n", sendtime_var);
   }
-  
-  if(strcmp(topic.c_str(),"/cdp/configout/reported/")==0)
+
+  if (strcmp(topic.c_str(), "/cdp/configout/reported/") == 0)
   {
     Serial.print(topic);
     Serial.print(" ");
     Serial.println(data);
-    reported_var=data.toInt();
+    reported_var = data.toInt();
     Serial.printf("Min seen:           %d veces\n", reported_var);
   }
-  
-  if(strcmp(topic.c_str(),"/cdp/configout/rssi/")==0)
+
+  if (strcmp(topic.c_str(), "/cdp/configout/rssi/") == 0)
   {
     Serial.print(topic);
     Serial.print(" ");
     Serial.println(data);
-    min_rssi_var=data.toInt();
+    min_rssi_var = data.toInt();
     Serial.printf("Min RSSI:           %d\n", min_rssi_var);
   }
-  
-  if(strcmp(topic.c_str(),"/cdp/configout/timeout/")==0)
+
+  if (strcmp(topic.c_str(), "/cdp/configout/timeout/") == 0)
   {
     Serial.print(topic);
     Serial.print(" ");
     Serial.println(data);
-    list_timeout_var=data.toInt();
+    list_timeout_var = data.toInt();
     Serial.printf("Max time:           %d segundos\n", list_timeout_var);
   } else {
     Serial.print("ACK: [");
